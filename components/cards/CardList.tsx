@@ -73,7 +73,7 @@ export default function CardList() {
   }
 
   return (
-    <div className="px-4 py-6 md:px-8 max-w-4xl mx-auto">
+    <div className="px-4 py-6 md:px-8 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
       <AnimatePresence mode="popLayout">
         {filtered.map(card => (
           <CardItem key={card.id} card={card} />

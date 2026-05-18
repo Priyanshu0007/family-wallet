@@ -16,7 +16,7 @@ export default function CardItem({ card }: { card: Card }) {
       exit={{ opacity: 0, scale: 0.95 }}
       whileTap={{ scale: 0.98 }}
       onClick={() => openSheet('cardDetail', card.id)}
-      className="cursor-pointer mb-6"
+      className="cursor-pointer"
     >
       <CardVisual card={card} />
     </motion.div>
