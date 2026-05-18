@@ -1,5 +1,5 @@
 "use client";
-import { CreditCard, BarChart2, Settings, Wallet } from 'lucide-react';
+import { CreditCard, BarChart2, Settings, Wallet, Users } from 'lucide-react';
 
 interface NavProps {
   activeTab: string;
@@ -10,6 +10,7 @@ export default function Sidebar({ activeTab, setActiveTab }: NavProps) {
   const tabs = [
     { id: 'cards', label: 'Cards', icon: CreditCard },
     { id: 'stats', label: 'Stats', icon: BarChart2 },
+    { id: 'family', label: 'Family', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 

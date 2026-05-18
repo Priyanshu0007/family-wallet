@@ -1,10 +1,11 @@
 "use client";
 import { useCardStore } from '../../store/cardStore';
-import { HOLDERS } from '../../lib/constants';
+import { useFamilyStore } from '../../store/familyStore';
 import { getExpiryStatus } from '../../lib/cardUtils';
 
 export default function StatsScreen() {
   const { cards } = useCardStore();
+  const { members } = useFamilyStore();
   
   const total = cards.length;
   const credits = cards.filter(c => c.type === 'Credit').length;
@@ -73,12 +74,12 @@ export default function StatsScreen() {
         <div>
           <h3 className="font-sora font-semibold mb-4 text-lg">Per Member</h3>
           <div className="space-y-4">
-            {HOLDERS.map(holder => {
-              const s = getHolderStats(holder);
+            {members.map(member => {
+              const s = getHolderStats(member.name);
               return (
-                <div key={holder} className="bg-surface-elevated p-4 rounded-xl border border-border">
+                <div key={member.id} className="bg-surface-elevated p-4 rounded-xl border border-border">
                   <div className="flex justify-between items-end mb-3">
-                    <span className="font-medium">{holder}</span>
+                    <span className="font-medium">{member.name}</span>
                     <span className="font-mono text-xl">{s.count}</span>
                   </div>
                   <div className="h-2 w-full bg-surface rounded-full overflow-hidden flex mb-2">

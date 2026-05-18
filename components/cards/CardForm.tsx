@@ -3,13 +3,15 @@ import { useState, useEffect } from 'react';
 import BottomSheet from '../ui/BottomSheet';
 import { useUiStore } from '../../store/uiStore';
 import { useCardStore } from '../../store/cardStore';
-import { BANKS, HOLDERS } from '../../lib/constants';
+import { useFamilyStore } from '../../store/familyStore';
+import { BANKS } from '../../lib/constants';
 import { getCardNetwork, formatCardNumber } from '../../lib/cardUtils';
 import { Card } from '../../store/db';
 
 export default function CardForm() {
   const { activeSheet, activeCardId, closeSheet, addToast } = useUiStore();
   const { cards, addCard, updateCard } = useCardStore();
+  const { members } = useFamilyStore();
   
   const isEdit = activeSheet === 'editCard';
   const isOpen = activeSheet === 'addCard' || isEdit;
@@ -29,7 +31,7 @@ export default function CardForm() {
           setNetwork(card.network);
         }
       } else {
-        setFormData({ bank: '', variant: '', type: 'Credit', number: '', expiry: '', cvv: '', holder: HOLDERS[0], notes: '' });
+        setFormData({ bank: '', variant: '', type: 'Credit', number: '', expiry: '', cvv: '', holder: members.length > 0 ? members[0].name : '', notes: '' });
         setNetwork('Unknown');
       }
     }
@@ -164,7 +166,7 @@ export default function CardForm() {
             required name="holder" value={formData.holder} onChange={handleChange}
             className="w-full bg-surface-elevated border border-border rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors appearance-none"
           >
-            {HOLDERS.map(h => <option key={h} value={h}>{h}</option>)}
+            {members.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
           </select>
         </div>
 

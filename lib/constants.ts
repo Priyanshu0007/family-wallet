@@ -14,5 +14,4 @@ export function getBankColorClass(bank: string): string {
   return BANK_COLORS[normalized] || BANK_COLORS['default'];
 }
 
-export const HOLDERS = ['Manu Jindal', 'Sushma Jindal', 'Ankita'];
 export const BANKS = ['HDFC', 'SBI', 'ICICI', 'Axis', 'Kotak', 'Yes Bank', 'IDFC', 'PNB', 'BOB', 'Canara'];

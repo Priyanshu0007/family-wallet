@@ -1,11 +1,12 @@
 "use client";
 import { useCardStore } from '../../store/cardStore';
-import { HOLDERS } from '../../lib/constants';
+import { useFamilyStore } from '../../store/familyStore';
 
 export default function FilterChips() {
   const { filter, setFilter } = useCardStore();
+  const { members } = useFamilyStore();
   
-  const options = ['All', ...HOLDERS, 'Credit', 'Debit', '⚠️ Expiring', '❌ Expired'];
+  const options = ['All', ...members.map(m => m.name), 'Credit', 'Debit', '⚠️ Expiring', '❌ Expired'];
 
   return (
     <div className="flex overflow-x-auto no-scrollbar gap-2 px-4 py-3 border-b border-border bg-background/95 backdrop-blur z-20 sticky top-16 md:top-0">

@@ -17,15 +17,25 @@ export interface Card {
   notes?: string;
 }
 
+export interface FamilyMember {
+  id: string;
+  name: string;
+  relation: string;
+  color: string;
+  addedAt: number;
+}
+
 const ENCRYPTED_FIELDS = ['number', 'cvv', 'holder', 'notes'];
 
 class FamilyWalletDB extends Dexie {
   cards!: Table<Card, string>;
+  family!: Table<FamilyMember, string>;
 
   constructor() {
     super('FamilyWalletDB');
-    this.version(1).stores({
-      cards: 'id, bank, type, network, addedAt'
+    this.version(2).stores({
+      cards: 'id, bank, type, network, addedAt',
+      family: 'id, name, relation, addedAt'
     });
 
     // Custom encryption middleware instead of `dexie-encrypted` to use Web Crypto directly

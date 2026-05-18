@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { usePinStore } from '../store/pinStore';
 import { useCardStore } from '../store/cardStore';
+import { useFamilyStore } from '../store/familyStore';
 import PinLock from '../components/pin/PinLock';
 import PinSetup from '../components/pin/PinSetup';
 import BottomNav from '../components/layout/BottomNav';
@@ -9,6 +10,7 @@ import Sidebar from '../components/layout/Sidebar';
 import HomeScreen from '../components/screens/HomeScreen';
 import StatsScreen from '../components/screens/StatsScreen';
 import SettingsScreen from '../components/screens/SettingsScreen';
+import FamilyScreen from '../components/screens/FamilyScreen';
 import Toast from '../components/ui/Toast';
 import SortModal from '../components/ui/SortModal';
 import CardDetail from '../components/cards/CardDetail';
@@ -17,6 +19,7 @@ import CardForm from '../components/cards/CardForm';
 export default function App() {
   const { isLocked, isFirstLaunch, initialize, lock, timeoutDuration } = usePinStore();
   const { loadCards } = useCardStore();
+  const { loadMembers } = useFamilyStore();
   const [activeTab, setActiveTab] = useState('cards');
   const [isInit, setIsInit] = useState(false);
 
@@ -47,12 +50,13 @@ export default function App() {
     };
   }, [lock, timeoutDuration]);
 
-  // Load cards when unlocked
+  // Load cards and members when unlocked
   useEffect(() => {
     if (!isLocked && isInit) {
       loadCards();
+      loadMembers();
     }
-  }, [isLocked, isInit, loadCards]);
+  }, [isLocked, isInit, loadCards, loadMembers]);
 
   if (!isInit) return <div className="min-h-screen bg-background" />;
 
@@ -71,6 +75,7 @@ export default function App() {
       <main className="flex-1 md:ml-64 h-full overflow-y-auto relative no-scrollbar">
         {activeTab === 'cards' && <HomeScreen />}
         {activeTab === 'stats' && <StatsScreen />}
+        {activeTab === 'family' && <FamilyScreen />}
         {activeTab === 'settings' && <SettingsScreen />}
       </main>
 

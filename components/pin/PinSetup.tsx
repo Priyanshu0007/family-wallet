@@ -5,6 +5,7 @@ import PinDots from './PinDots';
 import PinNumpad from './PinNumpad';
 import { usePinStore } from '../../store/pinStore';
 import { useCardStore } from '../../store/cardStore';
+import { useFamilyStore } from '../../store/familyStore';
 import { Wallet } from 'lucide-react';
 
 export default function PinSetup() {
@@ -14,7 +15,8 @@ export default function PinSetup() {
   const [error, setError] = useState(false);
   
   const { setupPin } = usePinStore();
-  const { seedIfEmpty } = useCardStore();
+  const { seedIfEmpty: seedCards } = useCardStore();
+  const { seedIfEmpty: seedFamily } = useFamilyStore();
 
   const handleKeyPress = async (key: string) => {
     if (step === 1) {
@@ -34,7 +36,8 @@ export default function PinSetup() {
         if (newPin.length === 6) {
           if (newPin === pin1) {
             await setupPin(newPin);
-            await seedIfEmpty();
+            await seedFamily();
+            await seedCards();
           } else {
             setError(true);
             setTimeout(() => {

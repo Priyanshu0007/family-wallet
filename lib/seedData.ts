@@ -32,3 +32,9 @@ export const SEED_CARDS = [
   
   return { ...c, network, color: c.bank.toLowerCase() };
 });
+
+export const SEED_FAMILY = [
+  { name: 'Manu Jindal', relation: 'Self', color: '#3b82f6' },
+  { name: 'Sushma Jindal', relation: 'Spouse', color: '#ec4899' },
+  { name: 'Ankita', relation: 'Daughter', color: '#8b5cf6' }
+];
