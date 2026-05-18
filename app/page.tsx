@@ -15,7 +15,7 @@ import CardDetail from '../components/cards/CardDetail';
 import CardForm from '../components/cards/CardForm';
 
 export default function App() {
-  const { isLocked, isFirstLaunch, initialize, lock } = usePinStore();
+  const { isLocked, isFirstLaunch, initialize, lock, timeoutDuration } = usePinStore();
   const { loadCards } = useCardStore();
   const [activeTab, setActiveTab] = useState('cards');
   const [isInit, setIsInit] = useState(false);
@@ -24,15 +24,17 @@ export default function App() {
     initialize().then(() => setIsInit(true));
   }, [initialize]);
 
-  // Handle auto-lock on background (2 mins)
+  // Handle auto-lock on background
   useEffect(() => {
+    if (timeoutDuration === -1) return; // Never lock
+
     let timeout: NodeJS.Timeout;
     
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         timeout = setTimeout(() => {
           lock();
-        }, 2 * 60 * 1000); // 2 minutes
+        }, timeoutDuration * 60 * 1000);
       } else {
         clearTimeout(timeout);
       }
@@ -43,7 +45,7 @@ export default function App() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearTimeout(timeout);
     };
-  }, [lock]);
+  }, [lock, timeoutDuration]);
 
   // Load cards when unlocked
   useEffect(() => {

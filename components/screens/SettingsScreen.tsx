@@ -5,14 +5,20 @@ import { useCardStore } from '../../store/cardStore';
 import { Shield, Smartphone, Trash2, Download, Upload, Info } from 'lucide-react';
 import { useState } from 'react';
 import ConfirmModal from '../ui/ConfirmModal';
+import ChangePinModal from '../pin/ChangePinModal';
 import { getDecryptedCards } from '../../store/db';
 import { importKeyFromBase64, exportKeyToBase64 } from '../../store/crypto';
 
 export default function SettingsScreen() {
-  const { resetApp } = usePinStore();
+  const { resetApp, timeoutDuration, setTimeoutDuration } = usePinStore();
   const { loadCards, addCard } = useCardStore();
   const { addToast } = useUiStore();
   const [isResetModalOpen, setResetModalOpen] = useState(false);
+  const [isChangePinModalOpen, setChangePinModalOpen] = useState(false);
+
+  const handleTimeoutChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setTimeoutDuration(Number(e.target.value));
+  };
 
   const handleExport = async () => {
     try {
@@ -77,7 +83,7 @@ export default function SettingsScreen() {
         <section>
           <h3 className="text-sm font-medium text-text-muted uppercase tracking-widest mb-3 ml-2">Security</h3>
           <div className="bg-surface-elevated rounded-2xl border border-border overflow-hidden">
-            <button className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors border-b border-border text-left">
+            <button onClick={() => setChangePinModalOpen(true)} className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors border-b border-border text-left">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                   <Shield size={20} />
@@ -88,17 +94,31 @@ export default function SettingsScreen() {
                 </div>
               </div>
             </button>
-            <button className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors text-left">
+            <div className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors text-left relative">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                   <Smartphone size={20} />
                 </div>
                 <div>
                   <p className="font-medium">Auto-lock Timeout</p>
-                  <p className="text-sm text-text-secondary">2 minutes (background)</p>
+                  <p className="text-sm text-text-secondary">
+                    {timeoutDuration === 0 ? 'Immediately' : timeoutDuration === -1 ? 'Never' : `${timeoutDuration} minutes`} (background)
+                  </p>
                 </div>
               </div>
-            </button>
+              <select 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                value={timeoutDuration}
+                onChange={handleTimeoutChange}
+              >
+                <option value={0}>Immediately</option>
+                <option value={1}>1 minute</option>
+                <option value={2}>2 minutes</option>
+                <option value={5}>5 minutes</option>
+                <option value={10}>10 minutes</option>
+                <option value={-1}>Never</option>
+              </select>
+            </div>
           </div>
         </section>
 
@@ -174,6 +194,11 @@ export default function SettingsScreen() {
         message="This will completely wipe your wallet database and reset your PIN. This action cannot be undone."
         confirmText="Yes, Wipe Everything"
         isDanger={true}
+      />
+
+      <ChangePinModal 
+        isOpen={isChangePinModalOpen} 
+        onClose={() => setChangePinModalOpen(false)} 
       />
     </div>
   );
