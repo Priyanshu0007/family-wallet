@@ -34,7 +34,7 @@ export default function HomeScreen() {
       <TopBar />
       
       {/* Stats Bar */}
-      <div className="flex overflow-x-auto no-scrollbar px-4 py-3 gap-4 border-b border-border bg-surface text-sm whitespace-nowrap z-10 sticky top-16">
+      <div className="flex overflow-x-auto no-scrollbar px-4 py-3 gap-4 border-b border-border bg-surface text-sm whitespace-nowrap z-40 sticky top-16">
         <div className="flex items-center gap-2">
           <span className="text-text-muted">Total</span>
           <span className="font-mono font-bold">{cards.length}</span>

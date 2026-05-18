@@ -62,7 +62,7 @@ export default function PinLock() {
         <div className="w-16 h-16 rounded-full bg-primary/20 text-primary flex items-center justify-center mb-4">
           <Wallet size={32} />
         </div>
-        <h1 className="text-2xl font-bold font-sora">Family Wallet</h1>
+        <h1 className="text-2xl font-bold font-sora">Tijori 🔐</h1>
       </div>
 
       <div className="h-20 flex items-center justify-center mb-8 w-full">

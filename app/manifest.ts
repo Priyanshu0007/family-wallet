@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Family Wallet',
-    short_name: 'FWallet',
-    description: 'A secure, offline-first family wallet app',
+    name: 'Tijori 🔐',
+    short_name: 'Tijori',
+    description: 'A secure, offline-first Tijori app',
     start_url: '/',
     display: 'standalone',
     background_color: '#0a0a0d',

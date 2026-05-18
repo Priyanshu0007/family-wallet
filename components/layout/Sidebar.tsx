@@ -19,7 +19,7 @@ export default function Sidebar({ activeTab, setActiveTab }: NavProps) {
         <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
           <Wallet size={24} />
         </div>
-        <h1 className="font-sora font-bold text-xl">Family Wallet</h1>
+        <h1 className="font-sora font-bold text-xl">Tijori 🔐</h1>
       </div>
 
       <nav className="flex-1 px-4 flex flex-col gap-2">

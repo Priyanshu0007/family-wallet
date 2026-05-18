@@ -16,13 +16,13 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Family Wallet",
-  description: "Secure, offline-first family wallet application.",
+  title: "Tijori",
+  description: "Secure, offline-first Tijori application.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Family Wallet",
+    title: "Tijori",
   },
 };
 

@@ -8,12 +8,12 @@ export default function TopBar() {
   const openSheet = useUiStore((s) => s.openSheet);
 
   return (
-    <header className="h-16 px-4 md:px-8 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-30">
+    <header className="h-16 px-4 md:px-8 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
           <Wallet size={18} />
         </div>
-        <h1 className="font-sora font-bold text-lg hidden sm:block">Family Wallet</h1>
+        <h1 className="font-sora font-bold text-lg hidden sm:block">Tijori 🔐</h1>
       </div>
       
       <div className="flex items-center gap-2">

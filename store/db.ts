@@ -17,7 +17,7 @@ export interface Card {
   notes?: string;
 }
 
-const ENCRYPTED_FIELDS = ['number', 'cvv', 'expiry', 'holder', 'notes'];
+const ENCRYPTED_FIELDS = ['number', 'cvv', 'holder', 'notes'];
 
 class FamilyWalletDB extends Dexie {
   cards!: Table<Card, string>;

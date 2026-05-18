@@ -172,12 +172,12 @@ export default function SettingsScreen() {
             <div>
               <p className="text-sm text-text-primary font-medium mb-1">Offline First & Secure</p>
               <p className="text-xs text-text-secondary leading-relaxed">
-                Family Wallet runs entirely on your device. Your data never leaves your browser. All sensitive card details are encrypted using AES-256-GCM before being stored.
+                Tijori runs entirely on your device. Your data never leaves your browser. All sensitive card details are encrypted using AES-256-GCM before being stored.
               </p>
             </div>
           </div>
           <div className="text-center mt-8 text-text-muted text-xs">
-            <p>Family Wallet v1.0.0</p>
+            <p>Tijori v1.0.0</p>
             <p className="mt-1">Built with Next.js, Dexie & Tailwind</p>
           </div>
         </section>
