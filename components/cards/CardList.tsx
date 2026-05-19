@@ -5,10 +5,24 @@ import { AnimatePresence } from 'framer-motion';
 import { getExpiryStatus } from '../../lib/cardUtils';
 
 export default function CardList() {
-  const { cards, filter, sortBy, searchQuery, isLoading } = useCardStore();
+  const { cards, filter, sortBy, searchQuery, isLoading, loadError } = useCardStore();
 
   if (isLoading) {
     return <div className="p-8 text-center text-text-muted">Loading cards...</div>;
+  }
+
+  if (loadError) {
+    return (
+      <div className="p-8 text-center">
+        <div className="bg-danger/10 border border-danger/30 rounded-2xl p-6 max-w-md mx-auto">
+          <p className="text-danger font-medium mb-2">⚠️ Decryption Error</p>
+          <p className="text-sm text-text-secondary mb-4">{loadError}</p>
+          <p className="text-xs text-text-muted">
+            If this persists, you may need to clear all data from Settings and re-add your cards.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // Filter

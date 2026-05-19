@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import { db, getDecryptedCards, Card } from './db';
+import { db, getDecryptedCards, Card, repairDoubleEncryptedCards } from './db';
 import { SEED_CARDS } from '../lib/seedData';
 import { nanoid } from 'nanoid';
 
 interface CardState {
   cards: Card[];
   isLoading: boolean;
+  loadError: string | null;
   searchQuery: string;
   filter: string;
   sortBy: string;
@@ -20,21 +21,48 @@ interface CardState {
   seedIfEmpty: () => Promise<void>;
 }
 
+// Track whether we've already attempted repair this session
+let hasAttemptedRepair = false;
+
 export const useCardStore = create<CardState>((set, get) => ({
   cards: [],
   isLoading: true,
+  loadError: null,
   searchQuery: '',
   filter: 'All',
   sortBy: 'Recently added',
 
   loadCards: async () => {
-    set({ isLoading: true });
+    set({ isLoading: true, loadError: null });
     try {
       const cards = await getDecryptedCards();
       set({ cards, isLoading: false });
-    } catch (e) {
-      console.error(e);
-      set({ cards: [], isLoading: false });
+    } catch (e: any) {
+      console.error('[CardStore] Failed to load cards:', e);
+      
+      // If decryption failed and we haven't tried repair yet, attempt auto-repair
+      if (!hasAttemptedRepair && e?.message?.includes('Decryption failed')) {
+        hasAttemptedRepair = true;
+        console.log('[CardStore] Attempting automatic data repair...');
+        try {
+          const repairedCount = await repairDoubleEncryptedCards();
+          if (repairedCount > 0) {
+            console.log(`[CardStore] Repaired ${repairedCount} cards. Reloading...`);
+            // Retry loading after repair
+            const cards = await getDecryptedCards();
+            set({ cards, isLoading: false, loadError: null });
+            return;
+          }
+        } catch (repairErr) {
+          console.error('[CardStore] Auto-repair also failed:', repairErr);
+        }
+      }
+      
+      set({ 
+        cards: [], 
+        isLoading: false,
+        loadError: 'Failed to decrypt card data. If you recently changed your PIN, the data may be corrupted.'
+      });
     }
   },
 

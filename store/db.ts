@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { encryptText, decryptText } from './crypto';
+import { encryptText, decryptText, looksEncrypted } from './crypto';
 import { usePinStore } from './pinStore';
 
 export interface Card {
@@ -61,6 +61,11 @@ class FamilyWalletDB extends Dexie {
                       const cloned = { ...item };
                       for (const field of ENCRYPTED_FIELDS) {
                         if (cloned[field]) {
+                          // Guard: skip if already encrypted to prevent double-encryption
+                          if (looksEncrypted(cloned[field])) {
+                            console.warn(`[Encryption] Skipping already-encrypted field "${field}" to prevent double-encryption`);
+                            continue;
+                          }
                           cloned[field] = await encryptText(cloned[field], key);
                         }
                       }
@@ -93,8 +98,12 @@ export async function getDecryptedCards(): Promise<Card[]> {
       if (dec[field as keyof Card]) {
         try {
           (dec as any)[field] = await decryptText(dec[field as keyof Card] as string, key);
-        } catch {
-          // If decryption fails, leave it as is or mask it
+        } catch (err) {
+          // Instead of silently leaving encrypted data, throw so the caller can handle it.
+          // This prevents the cascading double-encryption bug where encrypted data
+          // gets passed back to the DB and re-encrypted on edit.
+          console.error(`[Decryption] Failed to decrypt field "${field}" on card ${card.id}:`, err);
+          throw new Error(`Decryption failed for card ${card.id}, field "${field}". Key may have changed.`);
         }
       }
     }
@@ -113,10 +122,67 @@ export async function getDecryptedCard(id: string): Promise<Card | undefined> {
     if (dec[field as keyof Card]) {
       try {
         (dec as any)[field] = await decryptText(dec[field as keyof Card] as string, key);
-      } catch {
-        // ignored
+      } catch (err) {
+        console.error(`[Decryption] Failed to decrypt field "${field}" on card ${id}:`, err);
+        throw new Error(`Decryption failed for card ${id}, field "${field}". Key may have changed.`);
       }
     }
   }
   return dec;
+}
+
+/**
+ * Attempt to repair double/multi-encrypted card data.
+ * This fixes the cascading corruption bug where fields got encrypted multiple times.
+ * Returns the number of cards repaired.
+ */
+export async function repairDoubleEncryptedCards(): Promise<number> {
+  const key = usePinStore.getState().cryptoKey;
+  if (!key) return 0;
+  
+  const cards = await db.cards.toArray();
+  let repairedCount = 0;
+  
+  for (const card of cards) {
+    let cardWasRepaired = false;
+    const repaired = { ...card };
+    
+    for (const field of ENCRYPTED_FIELDS) {
+      let value = (card as any)[field];
+      if (!value) continue;
+      
+      // Try to decrypt — if first decryption succeeds but result still looks encrypted,
+      // keep decrypting to peel off extra layers
+      let decryptionLayers = 0;
+      const MAX_LAYERS = 10; // safety limit
+      
+      try {
+        let decrypted = await decryptText(value, key);
+        decryptionLayers++;
+        
+        while (looksEncrypted(decrypted) && decryptionLayers < MAX_LAYERS) {
+          decrypted = await decryptText(decrypted, key);
+          decryptionLayers++;
+        }
+        
+        if (decryptionLayers > 1) {
+          // Data was multi-encrypted — re-encrypt just once
+          (repaired as any)[field] = await encryptText(decrypted, key);
+          cardWasRepaired = true;
+          console.log(`[Repair] Fixed ${decryptionLayers}-layer encryption on card ${card.id}, field "${field}"`);
+        }
+      } catch {
+        // Can't decrypt at all — data may be from a different key, skip
+        console.warn(`[Repair] Cannot decrypt field "${field}" on card ${card.id} — skipping`);
+      }
+    }
+    
+    if (cardWasRepaired) {
+      // Use update to bypass the encryption middleware
+      await db.table('cards').update(card.id, repaired);
+      repairedCount++;
+    }
+  }
+  
+  return repairedCount;
 }

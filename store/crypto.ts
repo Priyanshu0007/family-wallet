@@ -85,6 +85,22 @@ export async function importKeyFromBase64(base64: string): Promise<CryptoKey> {
   );
 }
 
+/**
+ * Check if a string looks like it's already encrypted (matches the IV:ciphertext base64 format).
+ * This is used to prevent double-encryption which causes cascading data corruption.
+ */
+export function looksEncrypted(value: string): boolean {
+  if (!value || typeof value !== 'string') return false;
+  const parts = value.split(':');
+  if (parts.length !== 2) return false;
+  const [iv, cipher] = parts;
+  // IV should be 16 chars (12 bytes base64) and cipher should be reasonably long
+  if (iv.length !== 16) return false;
+  // Check both parts are valid base64
+  const base64Regex = /^[A-Za-z0-9+/]+=*$/;
+  return base64Regex.test(iv) && base64Regex.test(cipher) && cipher.length > 20;
+}
+
 export async function hashPinForVerification(pin: string): Promise<string> {
   const enc = new TextEncoder();
   const data = enc.encode(pin + "verification_salt");
