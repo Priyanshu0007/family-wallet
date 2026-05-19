@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Space_Mono } from "next/font/google";
+import ServiceWorkerRegistrar from "../components/pwa/ServiceWorkerRegistrar";
 import "./globals.css";
 
 const sora = Sora({ 
@@ -18,7 +19,6 @@ const spaceMono = Space_Mono({
 export const metadata: Metadata = {
   title: "Tijori",
   description: "Secure, offline-first Tijori application.",
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -42,6 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${sora.variable} ${spaceMono.variable} dark`}>
       <body className="antialiased bg-background text-text-primary selection:bg-primary/30">
+        <ServiceWorkerRegistrar />
         {children}
       </body>
     </html>

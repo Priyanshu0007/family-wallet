@@ -1,1 +1,183 @@
-if(!self.define){let e,s={};const a=(a,n)=>(a=new URL(a+".js",n).href,s[a]||new Promise(s=>{if("document"in self){const e=document.createElement("script");e.src=a,e.onload=s,document.head.appendChild(e)}else e=a,importScripts(a),s()}).then(()=>{let e=s[a];if(!e)throw new Error(`Module ${a} didn’t register its module`);return e}));self.define=(n,t)=>{const c=e||("document"in self?document.currentScript.src:"")||location.href;if(s[c])return;let i={};const o=e=>a(e,c),f={module:{uri:c},exports:i,require:o};s[c]=Promise.all(n.map(e=>f[e]||o(e))).then(e=>(t(...e),i))}}define(["./workbox-1bb06f5e"],function(e){"use strict";importScripts(),self.skipWaiting(),e.clientsClaim(),e.precacheAndRoute([{url:"/_next/static/DAWAncthwqb9vLYMf-ovI/_buildManifest.js",revision:"c870b219f06c6c6e17f1960ae96e73dc"},{url:"/_next/static/DAWAncthwqb9vLYMf-ovI/_ssgManifest.js",revision:"b6652df95db52feb4daf4eca35380933"},{url:"/_next/static/chunks/4bd1b696-215e5051988c3dde.js",revision:"215e5051988c3dde"},{url:"/_next/static/chunks/794-5fb6eff04a716ab6.js",revision:"5fb6eff04a716ab6"},{url:"/_next/static/chunks/962-99c3bf180b29924f.js",revision:"99c3bf180b29924f"},{url:"/_next/static/chunks/app/_global-error/page-94ba12960ff1a4ca.js",revision:"94ba12960ff1a4ca"},{url:"/_next/static/chunks/app/_not-found/page-97f48eb3dbd721c7.js",revision:"97f48eb3dbd721c7"},{url:"/_next/static/chunks/app/layout-a26bba21dc5d50fd.js",revision:"a26bba21dc5d50fd"},{url:"/_next/static/chunks/app/manifest.webmanifest/route-94ba12960ff1a4ca.js",revision:"94ba12960ff1a4ca"},{url:"/_next/static/chunks/app/page-3b0462ecefae2cf6.js",revision:"3b0462ecefae2cf6"},{url:"/_next/static/chunks/framework-93cda6578f6c76ec.js",revision:"93cda6578f6c76ec"},{url:"/_next/static/chunks/main-app-66eaccede39567ab.js",revision:"66eaccede39567ab"},{url:"/_next/static/chunks/main-be421bcea2d6db66.js",revision:"be421bcea2d6db66"},{url:"/_next/static/chunks/next/dist/client/components/builtin/app-error-94ba12960ff1a4ca.js",revision:"94ba12960ff1a4ca"},{url:"/_next/static/chunks/next/dist/client/components/builtin/forbidden-94ba12960ff1a4ca.js",revision:"94ba12960ff1a4ca"},{url:"/_next/static/chunks/next/dist/client/components/builtin/global-error-1c9dc997a44ec5bb.js",revision:"1c9dc997a44ec5bb"},{url:"/_next/static/chunks/next/dist/client/components/builtin/not-found-94ba12960ff1a4ca.js",revision:"94ba12960ff1a4ca"},{url:"/_next/static/chunks/next/dist/client/components/builtin/unauthorized-94ba12960ff1a4ca.js",revision:"94ba12960ff1a4ca"},{url:"/_next/static/chunks/polyfills-42372ed130431b0a.js",revision:"846118c33b2c0e922d7b3a7676f81f6f"},{url:"/_next/static/chunks/webpack-ac3847cd27022f45.js",revision:"ac3847cd27022f45"},{url:"/_next/static/css/965c7a1632c24e1c.css",revision:"965c7a1632c24e1c"},{url:"/_next/static/media/1d4eaed977255102-s.woff2",revision:"b2ac789bfd3a250ecb1f0d1bc8002cb6"},{url:"/_next/static/media/281dae1e814de8c6-s.woff2",revision:"2e8643e59f8dcca240efa656d5965385"},{url:"/_next/static/media/3c70c5716f1730b3-s.woff2",revision:"f5ca848fdd0823d0e166a4eb4164bc5a"},{url:"/_next/static/media/77fb5eec12c66d49-s.woff2",revision:"0af756a4168d80d59022d8bedb3305a9"},{url:"/_next/static/media/806de4d605d3ad01-s.p.woff2",revision:"55408a774dfe38eb61f842b03ef9e24a"},{url:"/_next/static/media/ae822095a172cc5c-s.woff2",revision:"21132e0765e0538063d507723efe0d3d"},{url:"/_next/static/media/f3f7e95f2dbc4fe4-s.p.woff2",revision:"26b4b6557e9db18aab82adad3e2df080"},{url:"/_next/static/media/fc727f226c737876-s.p.woff2",revision:"d62e75a5cd2d7406d1c855ae5aac62d3"},{url:"/file.svg",revision:"d09f95206c3fa0bb9bd9fefabfd0ea71"},{url:"/globe.svg",revision:"2aaafa6a49b6563925fe440891e32717"},{url:"/next.svg",revision:"8e061864f388b47f33a1c3780831193e"},{url:"/vercel.svg",revision:"c0af2f507b369b085b35ef4bbe3bcf1e"},{url:"/window.svg",revision:"a2760511c65806022ad20adf74370ff3"}],{ignoreURLParametersMatching:[]}),e.cleanupOutdatedCaches(),e.registerRoute("/",new e.NetworkFirst({cacheName:"start-url",plugins:[{cacheWillUpdate:async({request:e,response:s,event:a,state:n})=>s&&"opaqueredirect"===s.type?new Response(s.body,{status:200,statusText:"OK",headers:s.headers}):s}]}),"GET"),e.registerRoute(/^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,new e.CacheFirst({cacheName:"google-fonts-webfonts",plugins:[new e.ExpirationPlugin({maxEntries:4,maxAgeSeconds:31536e3})]}),"GET"),e.registerRoute(/^https:\/\/fonts\.(?:googleapis)\.com\/.*/i,new e.StaleWhileRevalidate({cacheName:"google-fonts-stylesheets",plugins:[new e.ExpirationPlugin({maxEntries:4,maxAgeSeconds:604800})]}),"GET"),e.registerRoute(/\.(?:eot|otf|ttc|ttf|woff|woff2|font.css)$/i,new e.StaleWhileRevalidate({cacheName:"static-font-assets",plugins:[new e.ExpirationPlugin({maxEntries:4,maxAgeSeconds:604800})]}),"GET"),e.registerRoute(/\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,new e.StaleWhileRevalidate({cacheName:"static-image-assets",plugins:[new e.ExpirationPlugin({maxEntries:64,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\/_next\/image\?url=.+$/i,new e.StaleWhileRevalidate({cacheName:"next-image",plugins:[new e.ExpirationPlugin({maxEntries:64,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\.(?:mp3|wav|ogg)$/i,new e.CacheFirst({cacheName:"static-audio-assets",plugins:[new e.RangeRequestsPlugin,new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\.(?:mp4)$/i,new e.CacheFirst({cacheName:"static-video-assets",plugins:[new e.RangeRequestsPlugin,new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\.(?:js)$/i,new e.StaleWhileRevalidate({cacheName:"static-js-assets",plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\.(?:css|less)$/i,new e.StaleWhileRevalidate({cacheName:"static-style-assets",plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\/_next\/data\/.+\/.+\.json$/i,new e.StaleWhileRevalidate({cacheName:"next-data",plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\.(?:json|xml|csv)$/i,new e.NetworkFirst({cacheName:"static-data-assets",plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(({url:e})=>{if(!(self.origin===e.origin))return!1;const s=e.pathname;return!s.startsWith("/api/auth/")&&!!s.startsWith("/api/")},new e.NetworkFirst({cacheName:"apis",networkTimeoutSeconds:10,plugins:[new e.ExpirationPlugin({maxEntries:16,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(({url:e})=>{if(!(self.origin===e.origin))return!1;return!e.pathname.startsWith("/api/")},new e.NetworkFirst({cacheName:"others",networkTimeoutSeconds:10,plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(({url:e})=>!(self.origin===e.origin),new e.NetworkFirst({cacheName:"cross-origin",networkTimeoutSeconds:10,plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:3600})]}),"GET")});
+/// Tijori Service Worker — Offline-first caching strategy
+/// No external dependencies (replaces next-pwa + workbox)
+
+const CACHE_VERSION = 'tijori-v1';
+const STATIC_CACHE = `${CACHE_VERSION}-static`;
+const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
+const FONT_CACHE = `${CACHE_VERSION}-fonts`;
+
+// Assets to pre-cache on install (app shell)
+const APP_SHELL = [
+  '/',
+  '/manifest.webmanifest',
+];
+
+// ----- Install: pre-cache app shell -----
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then((cache) => {
+      return cache.addAll(APP_SHELL);
+    })
+  );
+  // Activate immediately without waiting for old SW to finish
+  self.skipWaiting();
+});
+
+// ----- Activate: clean up old caches -----
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys
+          .filter((key) => key.startsWith('tijori-') && key !== STATIC_CACHE && key !== DYNAMIC_CACHE && key !== FONT_CACHE)
+          .map((key) => caches.delete(key))
+      );
+    })
+  );
+  // Claim all open clients immediately
+  self.clients.claim();
+});
+
+// ----- Fetch: routing strategies -----
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET requests
+  if (request.method !== 'GET') return;
+
+  // Skip chrome-extension and other non-http(s) protocols
+  if (!url.protocol.startsWith('http')) return;
+
+  // Strategy 1: Cache-first for Google Fonts
+  if (url.hostname === 'fonts.gstatic.com') {
+    event.respondWith(cacheFirst(request, FONT_CACHE, 365 * 24 * 60 * 60));
+    return;
+  }
+  if (url.hostname === 'fonts.googleapis.com') {
+    event.respondWith(staleWhileRevalidate(request, FONT_CACHE));
+    return;
+  }
+
+  // Strategy 2: Cache-first for static assets (JS, CSS, images, fonts in _next/static)
+  if (
+    url.pathname.startsWith('/_next/static/') ||
+    /\.(?:js|css|woff2?|ttf|otf|eot|ico|png|jpg|jpeg|gif|svg|webp)$/.test(url.pathname)
+  ) {
+    event.respondWith(cacheFirst(request, STATIC_CACHE));
+    return;
+  }
+
+  // Strategy 3: Network-first for navigations and dynamic content
+  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(networkFirst(request, DYNAMIC_CACHE));
+    return;
+  }
+
+  // Strategy 4: Stale-while-revalidate for everything else
+  event.respondWith(staleWhileRevalidate(request, DYNAMIC_CACHE));
+});
+
+// ----- Push notifications -----
+self.addEventListener('push', (event) => {
+  if (event.data) {
+    const data = event.data.json();
+    const options = {
+      body: data.body,
+      icon: data.icon || '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      vibrate: [100, 50, 100],
+      data: {
+        dateOfArrival: Date.now(),
+        primaryKey: '1',
+      },
+    };
+    event.waitUntil(self.registration.showNotification(data.title, options));
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow('/'));
+});
+
+
+// ============================================================
+// Caching strategy helpers
+// ============================================================
+
+/** Cache-first: serve from cache, fallback to network & cache the response */
+async function cacheFirst(request, cacheName, maxAgeSeconds) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    // If both cache and network fail, return a basic offline response
+    return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+  }
+}
+
+/** Network-first: try network, fallback to cache */
+async function networkFirst(request, cacheName) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+
+    // Return a minimal offline HTML page
+    return new Response(
+      `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tijori — Offline</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0a0d;color:#f1f1f3;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:2rem}
+  h1{font-size:1.5rem;margin-bottom:.5rem}
+  p{color:#8888a0;font-size:.9rem}
+</style>
+</head>
+<body>
+  <div>
+    <h1>📦 You're offline</h1>
+    <p>Tijori will reconnect when your internet is back.</p>
+  </div>
+</body>
+</html>`,
+      {
+        status: 200,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      }
+    );
+  }
+}
+
+/** Stale-while-revalidate: serve from cache immediately, update cache in background */
+async function staleWhileRevalidate(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+
+  const fetchPromise = fetch(request)
+    .then((response) => {
+      if (response.ok) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => cached);
+
+  return cached || fetchPromise;
+}
