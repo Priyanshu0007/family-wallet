@@ -10,7 +10,7 @@ import Sidebar from '../components/layout/Sidebar';
 import HomeScreen from '../components/screens/HomeScreen';
 import StatsScreen from '../components/screens/StatsScreen';
 import SettingsScreen from '../components/screens/SettingsScreen';
-import FamilyScreen from '../components/screens/FamilyScreen';
+import AiScreen from '../components/screens/AiScreen';
 import Toast from '../components/ui/Toast';
 import SortModal from '../components/ui/SortModal';
 import CardDetail from '../components/cards/CardDetail';
@@ -75,7 +75,7 @@ export default function App() {
       <main className="flex-1 md:ml-64 h-full overflow-y-auto relative no-scrollbar">
         {activeTab === 'cards' && <HomeScreen />}
         {activeTab === 'stats' && <StatsScreen />}
-        {activeTab === 'family' && <FamilyScreen />}
+        {activeTab === 'ai' && <AiScreen onBack={() => setActiveTab('cards')} />}
         {activeTab === 'settings' && <SettingsScreen />}
       </main>
 

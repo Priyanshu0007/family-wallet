@@ -2,8 +2,9 @@
 import { usePinStore } from '../../store/pinStore';
 import { useUiStore } from '../../store/uiStore';
 import { useCardStore } from '../../store/cardStore';
-import { Shield, Smartphone, Trash2, Download, Upload, Info } from 'lucide-react';
-import { useState } from 'react';
+import { useFamilyStore } from '../../store/familyStore';
+import { Shield, Smartphone, Trash2, Download, Upload, Info, Users, Plus, ChevronDown, ChevronUp, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import ConfirmModal from '../ui/ConfirmModal';
 import ChangePinModal from '../pin/ChangePinModal';
 import { getDecryptedCards } from '../../store/db';
@@ -11,10 +12,20 @@ import { importKeyFromBase64, exportKeyToBase64 } from '../../store/crypto';
 
 export default function SettingsScreen() {
   const { resetApp, timeoutDuration, setTimeoutDuration } = usePinStore();
-  const { loadCards, addCard } = useCardStore();
+  const { loadCards, addCard, cards } = useCardStore();
+  const { members, loadMembers, addMember, deleteMember } = useFamilyStore();
   const { addToast } = useUiStore();
   const [isResetModalOpen, setResetModalOpen] = useState(false);
   const [isChangePinModalOpen, setChangePinModalOpen] = useState(false);
+  const [isFamilyOpen, setFamilyOpen] = useState(false);
+  const [isAddingMember, setIsAddingMember] = useState(false);
+  const [memberName, setMemberName] = useState('');
+  const [memberRelation, setMemberRelation] = useState('');
+  const [memberColor, setMemberColor] = useState('#3b82f6');
+
+  useEffect(() => {
+    loadMembers();
+  }, [loadMembers]);
 
   const handleTimeoutChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setTimeoutDuration(Number(e.target.value));
@@ -73,6 +84,33 @@ export default function SettingsScreen() {
     e.target.value = ''; // reset
   };
 
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!memberName.trim() || !memberRelation.trim()) {
+      addToast('Name and relation are required', 'error');
+      return;
+    }
+    await addMember({ name: memberName, relation: memberRelation, color: memberColor });
+    setMemberName('');
+    setMemberRelation('');
+    setMemberColor('#3b82f6');
+    setIsAddingMember(false);
+    addToast('Family member added', 'success');
+  };
+
+  const handleDeleteMember = async (id: string, name: string) => {
+    const hasCards = cards.some(c => c.holder === name);
+    if (hasCards) {
+      addToast(`Cannot remove ${name} because they have registered cards`, 'error');
+      return;
+    }
+
+    if (confirm(`Remove ${name}?`)) {
+      await deleteMember(id);
+      addToast('Family member removed', 'success');
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen pb-24 px-4 py-8 md:px-12 md:py-12 max-w-3xl mx-auto w-full">
       <h2 className="text-2xl font-sora font-bold mb-8">Settings</h2>
@@ -119,6 +157,140 @@ export default function SettingsScreen() {
                 <option value={-1}>Never</option>
               </select>
             </div>
+          </div>
+        </section>
+
+        {/* Family Members */}
+        <section>
+          <h3 className="text-sm font-medium text-text-muted uppercase tracking-widest mb-3 ml-2">Family Members</h3>
+          <div className="bg-surface-elevated rounded-2xl border border-border overflow-hidden">
+            {/* Accordion Header */}
+            <button
+              onClick={() => setFamilyOpen(!isFamilyOpen)}
+              className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-violet-500/10 text-violet-400 flex items-center justify-center">
+                  <Users size={20} />
+                </div>
+                <div>
+                  <p className="font-medium">Manage Members</p>
+                  <p className="text-sm text-text-secondary">
+                    {members.length} member{members.length !== 1 ? 's' : ''} registered
+                  </p>
+                </div>
+              </div>
+              {isFamilyOpen ? (
+                <ChevronUp size={20} className="text-text-muted" />
+              ) : (
+                <ChevronDown size={20} className="text-text-muted" />
+              )}
+            </button>
+
+            {/* Accordion Body */}
+            {isFamilyOpen && (
+              <div className="border-t border-border">
+                {/* Add Member Button */}
+                <div className="p-4 border-b border-border">
+                  {!isAddingMember ? (
+                    <button
+                      onClick={() => setIsAddingMember(true)}
+                      className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/20 transition-colors w-full justify-center"
+                    >
+                      <Plus size={16} />
+                      <span>Add Member</span>
+                    </button>
+                  ) : (
+                    <form onSubmit={handleAddMember} className="space-y-3">
+                      <h4 className="font-sora font-semibold text-sm">New Family Member</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-text-muted mb-1">Name</label>
+                          <input
+                            type="text"
+                            value={memberName}
+                            onChange={(e) => setMemberName(e.target.value)}
+                            className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors"
+                            placeholder="e.g. John Doe"
+                            autoFocus
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-text-muted mb-1">Relation</label>
+                          <input
+                            type="text"
+                            value={memberRelation}
+                            onChange={(e) => setMemberRelation(e.target.value)}
+                            className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors"
+                            placeholder="e.g. Spouse, Child"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-text-muted mb-1">Color</label>
+                        <input
+                          type="color"
+                          value={memberColor}
+                          onChange={(e) => setMemberColor(e.target.value)}
+                          className="w-full h-10 bg-surface border border-border rounded-xl p-1 cursor-pointer"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingMember(false)}
+                          className="px-4 py-2 rounded-xl border border-border text-text-secondary hover:text-text-primary text-sm transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+
+                {/* Members List */}
+                {members.length === 0 ? (
+                  <div className="text-center py-8 px-4">
+                    <div className="w-12 h-12 bg-surface rounded-full flex items-center justify-center mx-auto mb-3 text-text-muted">
+                      <User size={24} />
+                    </div>
+                    <p className="text-sm text-text-muted">No family members yet</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {members.map(member => (
+                      <div key={member.id} className="flex items-center justify-between p-4 hover:bg-surface/50 transition-colors group">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-sora font-bold text-sm"
+                            style={{ backgroundColor: member.color }}
+                          >
+                            {member.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{member.name}</p>
+                            <p className="text-xs text-text-muted">{member.relation}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteMember(member.id, member.name)}
+                          className="text-text-muted hover:text-danger p-2 opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-danger/10"
+                          title="Remove"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
