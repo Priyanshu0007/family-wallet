@@ -7,9 +7,10 @@ import { usePinStore } from '../../store/pinStore';
 import { useCardStore } from '../../store/cardStore';
 import { useFamilyStore } from '../../store/familyStore';
 import { Wallet } from 'lucide-react';
+import Walkthrough from '../onboarding/Walkthrough';
 
 export default function PinSetup() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [pin1, setPin1] = useState('');
   const [pin2, setPin2] = useState('');
   const [error, setError] = useState(false);
@@ -58,6 +59,10 @@ export default function PinSetup() {
     if (step === 1) setPin1('');
     else setPin2('');
   };
+
+  if (step === 0) {
+    return <Walkthrough onComplete={() => setStep(1)} />;
+  }
 
   return (
     <motion.div 
