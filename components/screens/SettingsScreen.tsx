@@ -34,13 +34,15 @@ export default function SettingsScreen() {
   const handleExport = async () => {
     try {
       const cards = await getDecryptedCards();
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cards, null, 2));
+      const blob = new Blob([JSON.stringify(cards, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
       const downloadAnchorNode = document.createElement('a');
-      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("href", url);
       downloadAnchorNode.setAttribute("download", "family_wallet_export.json");
       document.body.appendChild(downloadAnchorNode);
       downloadAnchorNode.click();
       downloadAnchorNode.remove();
+      URL.revokeObjectURL(url);
       addToast('Data exported successfully', 'success');
     } catch (err) {
       addToast('Failed to export data', 'error');
@@ -298,7 +300,11 @@ export default function SettingsScreen() {
         <section>
           <h3 className="text-sm font-medium text-text-muted uppercase tracking-widest mb-3 ml-2">Data Management</h3>
           <div className="bg-surface-elevated rounded-2xl border border-border overflow-hidden">
-            <button onClick={handleExport} className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors border-b border-border text-left">
+            <button 
+              type="button"
+              onClick={handleExport} 
+              className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors border-b border-border text-left"
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-surface text-text-primary flex items-center justify-center border border-border">
                   <Download size={20} />
@@ -323,7 +329,11 @@ export default function SettingsScreen() {
               <input type="file" accept=".json" onChange={handleImport} className="hidden" />
             </label>
 
-            <button onClick={() => setResetModalOpen(true)} className="w-full flex items-center justify-between p-4 hover:bg-danger/5 transition-colors text-left">
+            <button 
+              type="button"
+              onClick={() => setResetModalOpen(true)} 
+              className="w-full flex items-center justify-between p-4 hover:bg-danger/5 transition-colors text-left"
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-danger/10 text-danger flex items-center justify-center">
                   <Trash2 size={20} />
@@ -358,8 +368,8 @@ export default function SettingsScreen() {
       <ConfirmModal
         isOpen={isResetModalOpen}
         onClose={() => setResetModalOpen(false)}
-        onConfirm={() => {
-          resetApp();
+        onConfirm={async () => {
+          await resetApp();
           window.location.reload();
         }}
         title="Clear All Data?"

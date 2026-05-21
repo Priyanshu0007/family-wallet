@@ -53,11 +53,11 @@ export async function POST(request: Request) {
     const cardsContext =
       cards && cards.length > 0
         ? cards
-            .map(
-              (c, i) =>
-                `${i + 1}. ${c.bank} ${c.variant} (${c.type}, ${c.network}) — Holder: ${c.holder}`
-            )
-            .join("\n")
+          .map(
+            (c, i) =>
+              `${i + 1}. ${c.bank} ${c.variant} (${c.type}, ${c.network}) — Holder: ${c.holder}`
+          )
+          .join("\n")
         : "No cards registered.";
 
     const fullSystemPrompt = `${SYSTEM_PROMPT}\n\nUser's active cards:\n${cardsContext}`;

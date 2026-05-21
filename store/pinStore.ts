@@ -15,7 +15,7 @@ interface PinState {
   changePin: (oldPin: string, newPin: string) => Promise<boolean>;
   setTimeoutDuration: (minutes: number) => void;
   lock: () => void;
-  resetApp: () => void;
+  resetApp: () => Promise<void>;
 }
 
 export const usePinStore = create<PinState>((set, get) => ({
@@ -178,7 +178,17 @@ export const usePinStore = create<PinState>((set, get) => ({
     set({ isLocked: true, cryptoKey: null });
   },
 
-  resetApp: () => {
+  resetApp: async () => {
+    const { db } = await import('./db');
+    try {
+      await Promise.all([
+        db.cards.clear(),
+        db.family.clear()
+      ]);
+    } catch (err) {
+      console.error('[resetApp] Failed to clear IndexedDB tables:', err);
+    }
+
     localStorage.clear();
     sessionStorage.clear();
     set({
