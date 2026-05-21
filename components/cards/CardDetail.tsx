@@ -6,7 +6,7 @@ import BottomSheet from '../ui/BottomSheet';
 import ConfirmModal from '../ui/ConfirmModal';
 import CardVisual from './CardVisual';
 import { copyToClipboard, getExpiryStatus } from '../../lib/cardUtils';
-import { Copy, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Copy, Edit2, Trash2, Eye, EyeOff, AlertTriangle, Clock } from 'lucide-react';
 
 export default function CardDetail() {
   const { activeSheet, activeCardId, closeSheet, openSheet, addToast } = useUiStore();
@@ -42,7 +42,21 @@ export default function CardDetail() {
   return (
     <>
       <BottomSheet isOpen={isOpen} onClose={closeSheet} title="Card Details">
-        <div className="pb-8">
+        <div className="pb-8 animate-in fade-in duration-300">
+          {expiryStatus === 'expired' && (
+            <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl p-3.5 flex gap-3 items-center text-sm mb-6 font-sora">
+              <AlertTriangle className="shrink-0 text-rose-400" size={20} />
+              <span>This card has expired and is no longer active. Please verify details or delete if no longer in use.</span>
+            </div>
+          )}
+
+          {expiryStatus === 'expiring' && (
+            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-xl p-3.5 flex gap-3 items-center text-sm mb-6 font-sora">
+              <Clock className="shrink-0 text-amber-400 animate-pulse" size={20} />
+              <span>This card is expiring soon. Please check if a replacement has been issued by your bank.</span>
+            </div>
+          )}
+
           <div className="mb-8">
             <CardVisual card={card} showFullNumber={showFullNum} />
           </div>

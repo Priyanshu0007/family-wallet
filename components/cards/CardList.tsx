@@ -53,6 +53,13 @@ export default function CardList() {
 
   // Sort
   filtered.sort((a, b) => {
+    const aExpired = getExpiryStatus(a.expiry) === 'expired';
+    const bExpired = getExpiryStatus(b.expiry) === 'expired';
+
+    // Push expired cards to the end of the list
+    if (aExpired && !bExpired) return 1;
+    if (!aExpired && bExpired) return -1;
+
     switch (sortBy) {
       case 'Oldest first': return a.addedAt - b.addedAt;
       case 'Expiry: soonest first': {
