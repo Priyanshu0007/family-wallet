@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, ShieldCheck, Users, ArrowRight, Check } from 'lucide-react';
+import { ShieldCheck, Users, ArrowRight, Check } from 'lucide-react';
+import TijoriLogo from '../ui/TijoriLogo';
 
 const slides = [
   {
-    icon: Wallet,
+    icon: TijoriLogo,
     title: 'Welcome to Tijori',
     description: 'Your secure, offline-first digital wallet for managing family cards.',
     color: 'text-primary',
-    bg: 'bg-primary/20'
+    bg: 'bg-primary/20',
+    isCustomLogo: true
   },
   {
     icon: ShieldCheck,
@@ -70,6 +72,10 @@ export default function Walkthrough({ onComplete }: { onComplete: () => void }) 
             <div className={`w-24 h-24 rounded-full ${slides[currentSlide].bg} ${slides[currentSlide].color} flex items-center justify-center mb-8`}>
               {(() => {
                 const Icon = slides[currentSlide].icon;
+                if ('isCustomLogo' in slides[currentSlide] && slides[currentSlide].isCustomLogo) {
+                  return <Icon size={56} />;
+                }
+                // @ts-ignore
                 return <Icon size={48} strokeWidth={1.5} />;
               })()}
             </div>

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PinDots from './PinDots';
 import PinNumpad from './PinNumpad';
 import { usePinStore } from '../../store/pinStore';
-import { Wallet } from 'lucide-react';
+import TijoriLogo from '../ui/TijoriLogo';
 
 export default function PinLock() {
   const [pin, setPin] = useState('');
@@ -59,10 +59,10 @@ export default function PinLock() {
       exit={{ opacity: 0 }}
     >
       <div className="flex flex-col items-center mb-12">
-        <div className="w-16 h-16 rounded-full bg-primary/20 text-primary flex items-center justify-center mb-4">
-          <Wallet size={32} />
+        <div className="mb-4">
+          <TijoriLogo size={64} />
         </div>
-        <h1 className="text-2xl font-bold font-sora">Tijori 🔐</h1>
+        <h1 className="text-2xl font-bold font-sora">Tijori</h1>
       </div>
 
       <div className="h-20 flex items-center justify-center mb-8 w-full">

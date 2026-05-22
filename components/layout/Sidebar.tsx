@@ -1,5 +1,6 @@
 "use client";
-import { CreditCard, BarChart2, Settings, Wallet, Sparkles } from 'lucide-react';
+import { CreditCard, BarChart2, Settings, Sparkles } from 'lucide-react';
+import TijoriLogo from '../ui/TijoriLogo';
 
 interface NavProps {
   activeTab: string;
@@ -17,10 +18,8 @@ export default function Sidebar({ activeTab, setActiveTab }: NavProps) {
   return (
     <aside className="hidden md:flex flex-col w-64 border-r border-border bg-surface h-full fixed left-0 top-0 pt-6 z-20">
       <div className="flex items-center gap-3 px-6 mb-12">
-        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-          <Wallet size={24} />
-        </div>
-        <h1 className="font-sora font-bold text-xl">Tijori 🔐</h1>
+        <TijoriLogo size={40} />
+        <h1 className="font-sora font-bold text-xl">Tijori</h1>
       </div>
 
       <nav className="flex-1 px-4 flex flex-col gap-2">

@@ -6,8 +6,8 @@ import PinNumpad from './PinNumpad';
 import { usePinStore } from '../../store/pinStore';
 import { useCardStore } from '../../store/cardStore';
 import { useFamilyStore } from '../../store/familyStore';
-import { Wallet } from 'lucide-react';
 import Walkthrough from '../onboarding/Walkthrough';
+import TijoriLogo from '../ui/TijoriLogo';
 
 export default function PinSetup() {
   const [step, setStep] = useState(0);
@@ -71,8 +71,8 @@ export default function PinSetup() {
       animate={{ opacity: 1 }}
     >
       <div className="flex flex-col items-center mb-12">
-        <div className="w-16 h-16 rounded-full bg-primary/20 text-primary flex items-center justify-center mb-4">
-          <Wallet size={32} />
+        <div className="mb-4">
+          <TijoriLogo size={64} />
         </div>
         <h1 className="text-2xl font-bold font-sora mb-2">Welcome</h1>
         <p className="text-text-secondary text-center">
