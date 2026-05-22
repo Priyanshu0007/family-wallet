@@ -1,8 +1,7 @@
 "use client";
-import { useState } from 'react';
 import { Card } from '../../store/db';
 import CardVisual from './CardVisual';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useUiStore } from '../../store/uiStore';
 
 export default function CardItem({ card }: { card: Card }) {
@@ -14,7 +13,9 @@ export default function CardItem({ card }: { card: Card }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ y: -6, scale: 1.015 }}
+      whileTap={{ scale: 0.985 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
       onClick={() => openSheet('cardDetail', card.id)}
       className="cursor-pointer"
     >

@@ -1,5 +1,5 @@
 "use client";
-import { CreditCard, BarChart2, Settings, Users } from 'lucide-react';
+import { CreditCard, BarChart2, Settings, Sparkles } from 'lucide-react';
 
 interface NavProps {
   activeTab: string;
@@ -10,7 +10,7 @@ export default function BottomNav({ activeTab, setActiveTab }: NavProps) {
   const tabs = [
     { id: 'cards', label: 'Cards', icon: CreditCard },
     { id: 'stats', label: 'Stats', icon: BarChart2 },
-    { id: 'family', label: 'Family', icon: Users },
+    { id: 'ai', label: 'AI Advisor', icon: Sparkles },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -19,12 +19,15 @@ export default function BottomNav({ activeTab, setActiveTab }: NavProps) {
       <div className="flex justify-around items-center h-16 px-2">
         {tabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
+          const isAi = id === 'ai';
           return (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
               className={`flex flex-col items-center justify-center w-20 h-full gap-1 transition-colors ${
-                isActive ? 'text-primary' : 'text-text-muted hover:text-text-secondary'
+                isActive 
+                  ? isAi ? 'text-violet-400' : 'text-primary' 
+                  : 'text-text-muted hover:text-text-secondary'
               }`}
             >
               <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />

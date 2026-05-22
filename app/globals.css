@@ -44,3 +44,132 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ═══════════════════════════════════════════
+   AI Markdown Rendering Styles
+   ═══════════════════════════════════════════ */
+.ai-markdown p {
+  margin-bottom: 0.75em;
+}
+.ai-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.ai-markdown h1,
+.ai-markdown h2,
+.ai-markdown h3 {
+  font-weight: 700;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+.ai-markdown h1 { font-size: 1.25rem; }
+.ai-markdown h2 { font-size: 1.1rem; }
+.ai-markdown h3 { font-size: 1rem; }
+
+.ai-markdown strong {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.ai-markdown em {
+  font-style: italic;
+  color: var(--color-text-secondary);
+}
+
+.ai-markdown ul,
+.ai-markdown ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+.ai-markdown ul {
+  list-style-type: disc;
+}
+.ai-markdown ol {
+  list-style-type: decimal;
+}
+.ai-markdown li {
+  margin-bottom: 0.35em;
+  line-height: 1.7;
+}
+.ai-markdown li::marker {
+  color: var(--color-text-muted);
+}
+
+.ai-markdown code {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.85em;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.15em 0.4em;
+  color: var(--color-primary);
+}
+
+.ai-markdown pre {
+  margin: 0.75em 0;
+  padding: 1em;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+.ai-markdown pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-text-primary);
+  font-size: 0.8em;
+}
+
+.ai-markdown blockquote {
+  margin: 0.75em 0;
+  padding: 0.5em 1em;
+  border-left: 3px solid var(--color-primary);
+  background: var(--color-primary)/5%;
+  border-radius: 0 8px 8px 0;
+  color: var(--color-text-secondary);
+}
+
+.ai-markdown hr {
+  margin: 1em 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.ai-markdown a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ai-markdown a:hover {
+  opacity: 0.8;
+}
+
+.ai-markdown table {
+  width: 100%;
+  margin: 0.75em 0;
+  border-collapse: collapse;
+  font-size: 0.85em;
+}
+.ai-markdown th,
+.ai-markdown td {
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--color-border);
+  text-align: left;
+}
+.ai-markdown th {
+  background: var(--color-surface-elevated);
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════
+   Blinking Cursor (streaming indicator)
+   ═══════════════════════════════════════════ */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+.animate-blink {
+  animation: blink 0.8s steps(1) infinite;
+}

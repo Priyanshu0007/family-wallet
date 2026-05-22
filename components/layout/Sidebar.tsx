@@ -1,5 +1,5 @@
 "use client";
-import { CreditCard, BarChart2, Settings, Wallet, Users } from 'lucide-react';
+import { CreditCard, BarChart2, Settings, Wallet, Sparkles } from 'lucide-react';
 
 interface NavProps {
   activeTab: string;
@@ -10,7 +10,7 @@ export default function Sidebar({ activeTab, setActiveTab }: NavProps) {
   const tabs = [
     { id: 'cards', label: 'Cards', icon: CreditCard },
     { id: 'stats', label: 'Stats', icon: BarChart2 },
-    { id: 'family', label: 'Family', icon: Users },
+    { id: 'ai', label: 'AI Advisor', icon: Sparkles },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -26,18 +26,26 @@ export default function Sidebar({ activeTab, setActiveTab }: NavProps) {
       <nav className="flex-1 px-4 flex flex-col gap-2">
         {tabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
+          const isAi = id === 'ai';
           return (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
               className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
                 isActive 
-                  ? 'bg-primary/10 text-primary font-semibold' 
+                  ? isAi
+                    ? 'bg-violet-500/10 text-violet-400 font-semibold'
+                    : 'bg-primary/10 text-primary font-semibold' 
                   : 'text-text-secondary hover:bg-surface-elevated hover:text-text-primary'
               }`}
             >
               <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
               <span className="text-sm">{label}</span>
+              {isAi && !isActive && (
+                <span className="ml-auto text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-violet-500/15 text-violet-400">
+                  new
+                </span>
+              )}
             </button>
           );
         })}

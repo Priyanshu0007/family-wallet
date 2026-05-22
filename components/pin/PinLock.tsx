@@ -97,9 +97,9 @@ export default function PinLock() {
       )}
 
       <button 
-        onClick={() => {
+        onClick={async () => {
           if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-            resetApp();
+            await resetApp();
             window.location.reload();
           }
         }}

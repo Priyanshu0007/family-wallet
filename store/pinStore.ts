@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { deriveKeyFromPin, hashPinForVerification, exportKeyToBase64, importKeyFromBase64 } from './crypto';
+import { deriveKeyFromPin, hashPinForVerification, exportKeyToBase64, importKeyFromBase64, encryptText, decryptText } from './crypto';
 
 interface PinState {
   isLocked: boolean;
@@ -15,7 +15,7 @@ interface PinState {
   changePin: (oldPin: string, newPin: string) => Promise<boolean>;
   setTimeoutDuration: (minutes: number) => void;
   lock: () => void;
-  resetApp: () => void;
+  resetApp: () => Promise<void>;
 }
 
 export const usePinStore = create<PinState>((set, get) => ({
@@ -118,17 +118,49 @@ export const usePinStore = create<PinState>((set, get) => ({
     const hash = await hashPinForVerification(oldPin);
 
     if (hash === storedHash) {
-      // Valid old pin, setup new pin
+      // Step 1: Derive the old key to decrypt existing data
+      const oldSalt = localStorage.getItem('pin_salt') || undefined;
+      const { key: oldKey } = await deriveKeyFromPin(oldPin, oldSalt);
+      
+      // Step 2: Derive a new key for the new PIN
       const newHash = await hashPinForVerification(newPin);
+      const { key: newKey, salt: newSalt } = await deriveKeyFromPin(newPin);
+      
+      // Step 3: Re-encrypt all cards from old key to new key
+      // Dynamic import db to avoid circular dependency
+      const { db } = await import('./db');
+      const ENCRYPTED_FIELDS = ['number', 'cvv', 'holder', 'notes'];
+      
+      const allCards = await db.cards.toArray();
+      for (const card of allCards) {
+        const reEncrypted = { ...card };
+        for (const field of ENCRYPTED_FIELDS) {
+          const value = (card as any)[field];
+          if (value) {
+            try {
+              // Decrypt with old key
+              const plaintext = await decryptText(value, oldKey);
+              // Re-encrypt with new key
+              (reEncrypted as any)[field] = await encryptText(plaintext, newKey);
+            } catch (err) {
+              console.error(`[ChangePin] Failed to re-encrypt field "${field}" on card ${card.id}:`, err);
+              throw new Error('Failed to re-encrypt data. PIN change aborted.');
+            }
+          }
+        }
+        // Write directly to the table, bypassing encryption middleware
+        // (since data is already encrypted with the new key)
+        await db.table('cards').update(card.id, reEncrypted);
+      }
+      
+      // Step 4: Store new credentials
       localStorage.setItem('pin_hash', newHash);
+      localStorage.setItem('pin_salt', newSalt);
       
-      const { key, salt } = await deriveKeyFromPin(newPin);
-      localStorage.setItem('pin_salt', salt);
-      
-      const keyBase64 = await exportKeyToBase64(key);
+      const keyBase64 = await exportKeyToBase64(newKey);
       sessionStorage.setItem('crypto_key', keyBase64);
       
-      set({ cryptoKey: key });
+      set({ cryptoKey: newKey });
       
       return true;
     }
@@ -146,7 +178,17 @@ export const usePinStore = create<PinState>((set, get) => ({
     set({ isLocked: true, cryptoKey: null });
   },
 
-  resetApp: () => {
+  resetApp: async () => {
+    const { db } = await import('./db');
+    try {
+      await Promise.all([
+        db.cards.clear(),
+        db.family.clear()
+      ]);
+    } catch (err) {
+      console.error('[resetApp] Failed to clear IndexedDB tables:', err);
+    }
+
     localStorage.clear();
     sessionStorage.clear();
     set({
