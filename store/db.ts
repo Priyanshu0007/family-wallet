@@ -15,6 +15,7 @@ export interface Card {
   color: string;
   addedAt: number;
   notes?: string;
+  benefits?: string[];
 }
 
 export interface FamilyMember {
