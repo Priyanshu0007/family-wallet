@@ -158,7 +158,7 @@ export default function CardForm() {
     const { name, value } = e.target;
     
     if (name === 'number') {
-      const clean = value.replace(/\D/g, '').slice(0, 16);
+      const clean = value.replace(/\D/g, '').slice(0, 19);
       const formatted = formatCardNumber(clean);
       setFormData(prev => ({ ...prev, number: formatted }));
       setNetwork(getCardNetwork(clean));
@@ -167,11 +167,17 @@ export default function CardForm() {
     
     if (name === 'expiry') {
       let clean = value.replace(/\D/g, '').slice(0, 4);
+      const isDeleting = value.length < (formData.expiry || '').length;
+      
       if (clean.length >= 2) {
-        const m = parseInt(clean.slice(0, 2), 10);
-        if (m > 12) clean = '12' + clean.slice(2);
-        if (m === 0) clean = '01' + clean.slice(2);
-        clean = `${clean.slice(0, 2)}/${clean.slice(2)}`;
+        if (isDeleting && value.length === 2) {
+          clean = clean.slice(0, 2);
+        } else {
+          const m = parseInt(clean.slice(0, 2), 10);
+          if (m > 12) clean = '12' + clean.slice(2);
+          if (m === 0) clean = '01' + clean.slice(2);
+          clean = `${clean.slice(0, 2)}/${clean.slice(2)}`;
+        }
       }
       setFormData(prev => ({ ...prev, expiry: clean }));
       return;
@@ -189,15 +195,23 @@ export default function CardForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const finalColor = formData.color && formData.color.includes('from-')
-        ? formData.color
-        : formData.bank!.toLowerCase();
+      const trimmedData = {
+        ...formData,
+        bank: formData.bank?.trim() || '',
+        variant: formData.variant?.trim() || '',
+        holder: formData.holder?.trim() || '',
+        notes: formData.notes?.trim() || '',
+      };
+
+      const finalColor = trimmedData.color && trimmedData.color.includes('from-')
+        ? trimmedData.color
+        : trimmedData.bank.toLowerCase();
 
       if (isEdit && activeCardId) {
-        await updateCard({ ...formData, id: activeCardId, network, color: finalColor } as Card);
+        await updateCard({ ...trimmedData, id: activeCardId, network, color: finalColor } as Card);
         addToast('Card updated successfully', 'success');
       } else {
-        await addCard({ ...formData, network, color: finalColor } as Omit<Card, 'id' | 'addedAt'>);
+        await addCard({ ...trimmedData, network, color: finalColor } as Omit<Card, 'id' | 'addedAt'>);
         addToast('Card added successfully', 'success');
       }
       closeSheet();
@@ -346,16 +360,14 @@ export default function CardForm() {
 
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1">Cardholder</label>
-          <select 
-            required name="holder" value={formData.holder} onChange={handleChange}
-            className="w-full bg-surface-elevated border border-border rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors appearance-none"
-          >
-            {members.length === 0 ? (
-              <option value="">No members added (add in settings)</option>
-            ) : (
-              members.map(m => <option key={m.id} value={m.name}>{m.name}</option>)
-            )}
-          </select>
+          <input 
+            required list="members" name="holder" value={formData.holder || ''} onChange={handleChange}
+            className="w-full bg-surface-elevated border border-border rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
+            placeholder="e.g. John Doe"
+          />
+          <datalist id="members">
+            {members.map(m => <option key={m.id} value={m.name} />)}
+          </datalist>
         </div>
 
         {/* Benefits Registry */}

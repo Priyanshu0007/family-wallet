@@ -126,12 +126,13 @@ export const usePinStore = create<PinState>((set, get) => ({
       const newHash = await hashPinForVerification(newPin);
       const { key: newKey, salt: newSalt } = await deriveKeyFromPin(newPin);
       
-      // Step 3: Re-encrypt all cards from old key to new key
+      // Step 3: Re-encrypt all cards from old key to new key in memory first
       // Dynamic import db to avoid circular dependency
       const { db } = await import('./db');
       const ENCRYPTED_FIELDS = ['number', 'cvv', 'holder', 'notes'];
       
       const allCards = await db.cards.toArray();
+      const updates: any[] = [];
       for (const card of allCards) {
         const reEncrypted = { ...card };
         for (const field of ENCRYPTED_FIELDS) {
@@ -148,12 +149,20 @@ export const usePinStore = create<PinState>((set, get) => ({
             }
           }
         }
-        // Write directly to the table, bypassing encryption middleware
-        // (since data is already encrypted with the new key)
-        await db.table('cards').update(card.id, reEncrypted);
+        updates.push(reEncrypted);
       }
+
+      // Step 4: Write all updates to the database inside a transaction
+      // This ensures either all cards are successfully re-encrypted in the DB or none are.
+      await db.transaction('rw', db.cards, async () => {
+        for (const reEncryptedCard of updates) {
+          // Write directly using update, bypassing encryption middleware
+          // (since data is already encrypted with the new key)
+          await db.table('cards').update(reEncryptedCard.id, reEncryptedCard);
+        }
+      });
       
-      // Step 4: Store new credentials
+      // Step 5: Store new credentials
       localStorage.setItem('pin_hash', newHash);
       localStorage.setItem('pin_salt', newSalt);
       
