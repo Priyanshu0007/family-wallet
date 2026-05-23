@@ -18,7 +18,7 @@ export default function CardForm() {
   const isOpen = activeSheet === 'addCard' || isEdit;
 
   const [formData, setFormData] = useState<Partial<Card>>({
-    bank: '', variant: '', type: 'Credit', number: '', expiry: '', cvv: '', holder: '', notes: '', color: 'bank-default', benefits: []
+    bank: '', variant: '', type: 'Credit', number: '', expiry: '', cvv: '', holder: '', notes: '', color: 'bank-default', benefits: [], rewardPoints: 0, pointValue: 0.25
   });
   
   const [network, setNetwork] = useState('Unknown');
@@ -50,7 +50,9 @@ export default function CardForm() {
             holder: members.length > 0 ? members[0].name : '', 
             notes: '',
             color: 'bank-default',
-            benefits: [] 
+            benefits: [],
+            rewardPoints: 0,
+            pointValue: 0.25
           });
           setNetwork('Unknown');
         }
@@ -371,6 +373,43 @@ export default function CardForm() {
           <datalist id="members">
             {members.map(m => <option key={m.id} value={m.name} />)}
           </datalist>
+        </div>
+
+        {/* Reward Points */}
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1">Reward Points</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[10px] text-text-muted uppercase tracking-wider font-semibold mb-1">Points Balance</label>
+              <input 
+                type="number"
+                name="rewardPoints"
+                min="0"
+                value={formData.rewardPoints || 0}
+                onChange={(e) => setFormData(prev => ({ ...prev, rewardPoints: Math.max(0, parseInt(e.target.value) || 0) }))}
+                className="w-full bg-surface-elevated border border-border rounded-xl px-4 py-3 text-text-primary font-mono focus:outline-none focus:border-amber-500/60 transition-colors"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-text-muted uppercase tracking-wider font-semibold mb-1">₹ per Point</label>
+              <input 
+                type="number"
+                name="pointValue"
+                min="0"
+                step="0.05"
+                value={formData.pointValue ?? 0.25}
+                onChange={(e) => setFormData(prev => ({ ...prev, pointValue: Math.max(0, parseFloat(e.target.value) || 0) }))}
+                className="w-full bg-surface-elevated border border-border rounded-xl px-4 py-3 text-text-primary font-mono focus:outline-none focus:border-amber-500/60 transition-colors"
+                placeholder="0.25"
+              />
+            </div>
+          </div>
+          {(formData.rewardPoints || 0) > 0 && (
+            <p className="text-xs text-amber-400/80 font-medium font-sora mt-2 text-right">
+              ≈ ₹{((formData.rewardPoints || 0) * (formData.pointValue ?? 0.25)).toLocaleString('en-IN')} estimated value
+            </p>
+          )}
         </div>
 
         {/* Benefits Registry */}

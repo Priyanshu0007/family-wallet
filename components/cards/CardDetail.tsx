@@ -6,7 +6,7 @@ import BottomSheet from '../ui/BottomSheet';
 import ConfirmModal from '../ui/ConfirmModal';
 import CardVisual from './CardVisual';
 import { copyToClipboard, getExpiryStatus } from '../../lib/cardUtils';
-import { Copy, Edit2, Trash2, Eye, EyeOff, AlertTriangle, Clock } from 'lucide-react';
+import { Copy, Edit2, Trash2, Eye, EyeOff, AlertTriangle, Clock, Trophy } from 'lucide-react';
 
 export default function CardDetail() {
   const { activeSheet, activeCardId, closeSheet, openSheet, addToast } = useUiStore();
@@ -115,6 +115,26 @@ export default function CardDetail() {
               </div>
             </div>
             
+            {(card.rewardPoints ?? 0) > 0 && (
+              <div className="bg-gradient-to-r from-amber-500/10 to-yellow-500/5 rounded-xl p-4 border border-amber-500/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center border border-amber-500/20">
+                      <Trophy size={18} className="text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-amber-300/70 font-medium uppercase tracking-wider">Reward Points</p>
+                      <p className="font-mono text-lg font-bold text-amber-300">{(card.rewardPoints ?? 0).toLocaleString('en-IN')}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-text-muted uppercase tracking-wider font-medium">Est. Value <span className="text-amber-400/50">@₹{card.pointValue ?? 0.25}/pt</span></p>
+                    <p className="text-base font-bold font-mono text-amber-400">₹{((card.rewardPoints ?? 0) * (card.pointValue ?? 0.25)).toLocaleString('en-IN')}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {card.notes && (
               <div className="bg-surface-elevated rounded-xl p-4 border border-border">
                 <p className="text-xs text-text-muted mb-1 font-medium uppercase tracking-wider">Notes</p>

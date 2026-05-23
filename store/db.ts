@@ -16,6 +16,8 @@ export interface Card {
   addedAt: number;
   notes?: string;
   benefits?: string[];
+  rewardPoints?: number;
+  pointValue?: number; // ₹ per reward point (varies by card/bank, defaults to 0.25)
 }
 
 export interface FamilyMember {

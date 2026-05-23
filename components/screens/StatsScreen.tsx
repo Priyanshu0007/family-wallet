@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import { useCardStore } from '../../store/cardStore';
 import { useFamilyStore } from '../../store/familyStore';
 import { getExpiryStatus, parseExpiry, maskCardNumber } from '../../lib/cardUtils';
-import { Calendar, PieChart, Users, Building, ShieldAlert, CheckCircle, CreditCard, Clock, AlertTriangle } from 'lucide-react';
+import { Calendar, PieChart, Users, Building, ShieldAlert, CheckCircle, CreditCard, Clock, AlertTriangle, Trophy, Gem } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ChartData {
@@ -106,6 +106,27 @@ export default function StatsScreen() {
   
   const expiring = cards.filter(c => getExpiryStatus(c.expiry) === 'expiring').length;
   const expired = cards.filter(c => getExpiryStatus(c.expiry) === 'expired').length;
+
+  // Reward points calculations — each card has its own pointValue (₹ per point)
+  const DEFAULT_POINT_VALUE = 0.25;
+  const totalRewardPoints = cards.reduce((sum, c) => sum + (c.rewardPoints ?? 0), 0);
+  const totalPointsValue = cards.reduce((sum, c) => sum + (c.rewardPoints ?? 0) * (c.pointValue ?? DEFAULT_POINT_VALUE), 0);
+  const cardsWithPoints = cards.filter(c => (c.rewardPoints ?? 0) > 0);
+  const maxCardPoints = Math.max(...cardsWithPoints.map(c => c.rewardPoints ?? 0), 1);
+
+  const rewardsByMember = useMemo(() => {
+    const memberMap: Record<string, { name: string; points: number; value: number; cardCount: number; color: string }> = {};
+    cards.forEach(c => {
+      if (!memberMap[c.holder]) {
+        const member = members.find(m => m.name === c.holder);
+        memberMap[c.holder] = { name: c.holder, points: 0, value: 0, cardCount: 0, color: member?.color || '#6b7280' };
+      }
+      memberMap[c.holder].points += (c.rewardPoints ?? 0);
+      memberMap[c.holder].value += (c.rewardPoints ?? 0) * (c.pointValue ?? DEFAULT_POINT_VALUE);
+      memberMap[c.holder].cardCount++;
+    });
+    return Object.values(memberMap).sort((a, b) => b.value - a.value);
+  }, [cards, members]);
 
   const getHolderStats = (holder: string) => {
     const holderCards = cards.filter(c => c.holder === holder);
@@ -213,7 +234,7 @@ export default function StatsScreen() {
       <h2 className="text-2xl font-sora font-bold mb-8">Dashboard Statistics</h2>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-surface-elevated p-4 rounded-2xl border border-border/80 flex flex-col justify-between hover:border-primary/30 transition-all duration-300">
           <p className="text-text-muted text-xs uppercase tracking-wider font-semibold font-sora mb-1">Total Cards</p>
           <div className="flex items-baseline gap-2 mt-2">
@@ -243,13 +264,32 @@ export default function StatsScreen() {
             <span className="text-xs text-text-secondary">next 3m</span>
           </div>
         </div>
-        <div className={`p-4 rounded-2xl border transition-all duration-300 ${
-          expired > 0 ? 'bg-danger/10 border-danger/20 hover:border-danger/45 animate-pulse' : 'bg-surface-elevated border-border/80'
-        }`}>
-          <p className={`text-xs uppercase tracking-wider font-semibold font-sora mb-1 ${expired > 0 ? 'text-danger' : 'text-text-muted'}`}>Expired</p>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className={`text-3xl font-bold font-mono ${expired > 0 ? 'text-danger' : 'text-text-primary'}`}>{expired}</span>
-            <span className="text-xs text-text-secondary">replace</span>
+      </div>
+
+      {/* Rewards Summary Strip */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 p-5 rounded-2xl border border-amber-500/20 mb-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl pointer-events-none" />
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/25 to-yellow-500/25 flex items-center justify-center border border-amber-500/20 shadow-lg shadow-amber-500/10">
+            <Trophy size={20} className="text-amber-400" />
+          </div>
+          <div>
+            <h3 className="font-sora font-semibold text-base text-amber-200">Rewards Overview</h3>
+            <p className="text-[10px] text-amber-300/50 font-medium">Point value varies per card</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4 relative z-10">
+          <div>
+            <p className="text-[10px] text-amber-300/60 uppercase tracking-wider font-semibold font-sora mb-1">Total Points</p>
+            <p className="text-2xl font-bold font-mono text-amber-300">{totalRewardPoints.toLocaleString('en-IN')}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-amber-300/60 uppercase tracking-wider font-semibold font-sora mb-1">Est. Value</p>
+            <p className="text-2xl font-bold font-mono text-amber-400">₹{totalPointsValue.toLocaleString('en-IN')}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-amber-300/60 uppercase tracking-wider font-semibold font-sora mb-1">Cards w/ Points</p>
+            <p className="text-2xl font-bold font-mono text-amber-300">{cardsWithPoints.length}<span className="text-sm text-amber-400/50 ml-1">/ {total}</span></p>
           </div>
         </div>
       </div>
@@ -443,6 +483,86 @@ export default function StatsScreen() {
           </div>
         )}
       </div>
+
+      {/* Rewards Breakdown Section */}
+      {cardsWithPoints.length > 0 && (
+        <div className="bg-surface-elevated p-6 rounded-2xl border border-border/80 mt-8">
+          <h3 className="font-sora font-semibold text-base mb-5 flex items-center gap-2 border-b border-border/40 pb-4">
+            <Gem size={18} className="text-amber-400" />
+            <span>Rewards Breakdown</span>
+          </h3>
+
+          {/* Per-member reward aggregation */}
+          <div className="mb-6">
+            <p className="text-xs text-text-muted uppercase tracking-wider font-semibold font-sora mb-3">Points by Member</p>
+            <div className="space-y-3">
+              {rewardsByMember.filter(m => m.points > 0).map(member => {
+                const pct = totalPointsValue > 0 ? Math.round((member.value / totalPointsValue) * 100) : 0;
+                return (
+                  <div key={member.name} className="group hover:bg-surface/30 p-2 -mx-2 rounded-xl transition-all duration-200">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: member.color }} />
+                        <span className="font-semibold text-xs text-text-primary">{member.name}</span>
+                        <span className="text-[10px] text-text-muted bg-surface/50 px-1.5 py-0.5 rounded border border-border/30">{member.cardCount} card{member.cardCount !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-xs text-amber-300">{member.points.toLocaleString('en-IN')} pts</span>
+                        <span className="text-[10px] font-bold font-mono bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/15 text-amber-400">₹{member.value.toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+                    <div className="h-2 w-full bg-surface rounded-full overflow-hidden">
+                      <div 
+                        style={{ 
+                          width: `${pct}%`,
+                          boxShadow: '0 0 8px rgba(245, 158, 11, 0.3)'
+                        }} 
+                        className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-amber-500/80 to-yellow-500/80" 
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Per-card breakdown */}
+          <div>
+            <p className="text-xs text-text-muted uppercase tracking-wider font-semibold font-sora mb-3">Points by Card</p>
+            <div className="space-y-2.5 max-h-[320px] overflow-y-auto no-scrollbar">
+              {[...cardsWithPoints]
+                .sort((a, b) => (b.rewardPoints ?? 0) - (a.rewardPoints ?? 0))
+                .map(card => {
+                  const pts = card.rewardPoints ?? 0;
+                  const pv = card.pointValue ?? DEFAULT_POINT_VALUE;
+                  const barPct = Math.round((pts / maxCardPoints) * 100);
+                  const value = (pts * pv).toLocaleString('en-IN');
+                  return (
+                    <div key={card.id} className="group">
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs font-semibold text-text-primary truncate">{card.bank}</span>
+                          <span className="text-[10px] text-text-muted truncate">• {card.variant}</span>
+                          <span className="text-[9px] text-amber-400/40 font-mono">@₹{pv}/pt</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[11px] font-mono font-bold text-amber-300">{pts.toLocaleString('en-IN')}</span>
+                          <span className="text-[10px] text-amber-400/60 font-mono">≈₹{value}</span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 bg-surface rounded-full overflow-hidden">
+                        <div 
+                          style={{ width: `${barPct}%` }} 
+                          className="h-full bg-gradient-to-r from-amber-500/60 to-yellow-500/60 rounded-full transition-all duration-1000 ease-out group-hover:from-amber-500 group-hover:to-yellow-500" 
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
