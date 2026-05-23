@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { db, getDecryptedCards, Card, repairDoubleEncryptedCards } from './db';
+import { db, getDecryptedCards, Card, encryptCardFields, repairDoubleEncryptedCards } from './db';
 import { SEED_CARDS } from '../lib/seedData';
 import { nanoid } from 'nanoid';
 
@@ -72,12 +72,17 @@ export const useCardStore = create<CardState>((set, get) => ({
       id: nanoid(),
       addedAt: Date.now()
     };
-    await db.cards.add(newCard);
+    // Encrypt BEFORE writing to IndexedDB — crypto.subtle is async and would
+    // cause the IDB transaction to auto-commit if done inside Dexie middleware.
+    const encrypted = await encryptCardFields(newCard);
+    await db.cards.add(encrypted);
     await get().loadCards();
   },
 
   updateCard: async (card) => {
-    await db.cards.put(card);
+    // Encrypt BEFORE writing to IndexedDB
+    const encrypted = await encryptCardFields(card);
+    await db.cards.put(encrypted);
     await get().loadCards();
   },
 

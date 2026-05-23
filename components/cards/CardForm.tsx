@@ -28,31 +28,34 @@ export default function CardForm() {
 
   useEffect(() => {
     if (isOpen) {
-      if (isEdit && activeCardId) {
-        const card = cards.find(c => c.id === activeCardId);
-        if (card) {
-          setFormData({
-            ...card,
-            color: card.color || 'bank-default',
-            benefits: card.benefits || []
+      const t = setTimeout(() => {
+        if (isEdit && activeCardId) {
+          const card = cards.find(c => c.id === activeCardId);
+          if (card) {
+            setFormData({
+              ...card,
+              color: card.color || 'bank-default',
+              benefits: card.benefits || []
+            });
+            setNetwork(card.network);
+          }
+        } else {
+          setFormData({ 
+            bank: '', 
+            variant: '', 
+            type: 'Credit', 
+            number: '', 
+            expiry: '', 
+            cvv: '', 
+            holder: members.length > 0 ? members[0].name : '', 
+            notes: '',
+            color: 'bank-default',
+            benefits: [] 
           });
-          setNetwork(card.network);
+          setNetwork('Unknown');
         }
-      } else {
-        setFormData({ 
-          bank: '', 
-          variant: '', 
-          type: 'Credit', 
-          number: '', 
-          expiry: '', 
-          cvv: '', 
-          holder: members.length > 0 ? members[0].name : '', 
-          notes: '',
-          color: 'bank-default',
-          benefits: [] 
-        });
-        setNetwork('Unknown');
-      }
+      }, 0);
+      return () => clearTimeout(t);
     }
   }, [isOpen, isEdit, activeCardId, cards, members]);
 

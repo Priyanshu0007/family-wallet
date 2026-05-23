@@ -38,54 +38,37 @@ class FamilyWalletDB extends Dexie {
       cards: 'id, bank, type, network, addedAt',
       family: 'id, name, relation, addedAt'
     });
-
-    // Custom encryption middleware instead of `dexie-encrypted` to use Web Crypto directly
-    this.use({
-      stack: "dbcore",
-      name: "encryption",
-      create(downlevelDatabase) {
-        return {
-          ...downlevelDatabase,
-          table(tableName) {
-            const downlevelTable = downlevelDatabase.table(tableName);
-            if (tableName !== 'cards') return downlevelTable;
-
-            return {
-              ...downlevelTable,
-              async mutate(req) {
-                if (req.type === 'add' || req.type === 'put') {
-                  const key = usePinStore.getState().cryptoKey;
-                  if (!key) throw new Error("Database locked");
-
-                  const encryptedValues = await Promise.all(
-                    req.values.map(async (item: any) => {
-                      const cloned = { ...item };
-                      for (const field of ENCRYPTED_FIELDS) {
-                        if (cloned[field]) {
-                          // Guard: skip if already encrypted to prevent double-encryption
-                          if (looksEncrypted(cloned[field])) {
-                            console.warn(`[Encryption] Skipping already-encrypted field "${field}" to prevent double-encryption`);
-                            continue;
-                          }
-                          cloned[field] = await encryptText(cloned[field], key);
-                        }
-                      }
-                      return cloned;
-                    })
-                  );
-                  return downlevelTable.mutate({ ...req, values: encryptedValues });
-                }
-                return downlevelTable.mutate(req);
-              }
-            };
-          }
-        };
-      }
-    });
+    // NOTE: Encryption middleware was removed because Web Crypto async operations
+    // (crypto.subtle.encrypt) resolve on a different microtask queue than IndexedDB,
+    // causing the IDB transaction to auto-commit before the encrypted data can be written.
+    // Encryption is now performed at the store layer (cardStore.ts) before calling Dexie.
   }
 }
 
 export const db = new FamilyWalletDB();
+
+/**
+ * Encrypt sensitive card fields before writing to IndexedDB.
+ * Must be called BEFORE db.cards.add() or db.cards.put() — outside any IDB transaction.
+ */
+export async function encryptCardFields(card: Card): Promise<Card> {
+  const key = usePinStore.getState().cryptoKey;
+  if (!key) throw new Error("Database locked — no encryption key available");
+
+  const encrypted = { ...card };
+  for (const field of ENCRYPTED_FIELDS) {
+    const value = (encrypted as Record<string, unknown>)[field];
+    if (value && typeof value === 'string') {
+      // Guard: skip if already encrypted to prevent double-encryption
+      if (looksEncrypted(value)) {
+        console.warn(`[Encryption] Skipping already-encrypted field "${field}" to prevent double-encryption`);
+        continue;
+      }
+      (encrypted as Record<string, unknown>)[field] = await encryptText(value, key);
+    }
+  }
+  return encrypted;
+}
 
 // We need a wrapper to decrypt since Dexie hooks don't easily allow async reading middleware for all query types in dbcore without huge complexity.
 // We will manually decrypt when reading from the store.

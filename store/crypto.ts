@@ -5,7 +5,7 @@ export async function deriveKeyFromPin(pin: string, saltBase64?: string): Promis
     enc.encode(pin),
     { name: "PBKDF2" },
     false,
-    ["deriveBits", "deriveKey"]
+    ["deriveKey"]
   );
 
   let salt: Uint8Array;
@@ -79,7 +79,7 @@ export async function importKeyFromBase64(base64: string): Promise<CryptoKey> {
   return await window.crypto.subtle.importKey(
     "raw",
     raw,
-    { name: "AES-GCM", length: 256 },
+    { name: "AES-GCM" },
     true,
     ["encrypt", "decrypt"]
   );

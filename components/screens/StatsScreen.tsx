@@ -19,8 +19,6 @@ function DonutChart({ data }: { data: ChartData[] }) {
   const strokeWidth = 20;
   const circumference = 2 * Math.PI * radius;
   
-  let cumulativeOffset = 0;
-  
   if (total === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-6 h-full min-h-[180px] bg-surface/30 rounded-2xl border border-border/50">
@@ -29,17 +27,24 @@ function DonutChart({ data }: { data: ChartData[] }) {
     );
   }
 
+  // Pre-calculate cumulative offsets purely to satisfy React Compiler purity rules
+  const activeItems = data.filter(item => item.count > 0);
+  const itemsWithOffsets = activeItems.map((item, index) => {
+    const pct = (item.count / total) * 100;
+    const previousPctSum = activeItems
+      .slice(0, index)
+      .reduce((sum, prevItem) => sum + (prevItem.count / total) * 100, 0);
+    return { item, pct, offset: previousPctSum };
+  });
+
   return (
     <div className="flex flex-col sm:flex-row items-center gap-8 py-4">
       {/* SVG Donut */}
       <div className="relative w-[180px] h-[180px] shrink-0">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rotate-[-90deg]">
-          {data.map((item) => {
-            if (item.count === 0) return null;
-            const pct = (item.count / total) * 100;
+          {itemsWithOffsets.map(({ item, pct, offset }) => {
             const strokeLength = (pct / 100) * circumference;
-            const strokeOffset = circumference - (cumulativeOffset / 100) * circumference;
-            cumulativeOffset += pct;
+            const strokeOffset = circumference - (offset / 100) * circumference;
             
             return (
               <circle

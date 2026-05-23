@@ -71,11 +71,10 @@ export default function Walkthrough({ onComplete }: { onComplete: () => void }) 
           >
             <div className={`w-24 h-24 rounded-full ${slides[currentSlide].bg} ${slides[currentSlide].color} flex items-center justify-center mb-8`}>
               {(() => {
-                const Icon = slides[currentSlide].icon;
+                const Icon = slides[currentSlide].icon as any;
                 if ('isCustomLogo' in slides[currentSlide] && slides[currentSlide].isCustomLogo) {
                   return <Icon size={56} />;
                 }
-                // @ts-ignore
                 return <Icon size={48} strokeWidth={1.5} />;
               })()}
             </div>
