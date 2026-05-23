@@ -121,6 +121,20 @@ export default function CardDetail() {
                 <p className="text-sm text-text-primary">{card.notes}</p>
               </div>
             )}
+
+            {card.benefits && card.benefits.length > 0 && (
+              <div className="bg-surface-elevated rounded-xl p-4 border border-border">
+                <p className="text-xs text-text-muted mb-2 font-medium uppercase tracking-wider">Benefits & Rewards</p>
+                <div className="flex flex-col gap-2">
+                  {card.benefits.map((benefit, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                      <span className="text-text-primary/90">{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-4">

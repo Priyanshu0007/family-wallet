@@ -5,7 +5,7 @@ export async function deriveKeyFromPin(pin: string, saltBase64?: string): Promis
     enc.encode(pin),
     { name: "PBKDF2" },
     false,
-    ["deriveBits", "deriveKey"]
+    ["deriveKey"]
   );
 
   let salt: Uint8Array;
@@ -79,7 +79,7 @@ export async function importKeyFromBase64(base64: string): Promise<CryptoKey> {
   return await window.crypto.subtle.importKey(
     "raw",
     raw,
-    { name: "AES-GCM", length: 256 },
+    { name: "AES-GCM" },
     true,
     ["encrypt", "decrypt"]
   );
@@ -106,4 +106,95 @@ export async function hashPinForVerification(pin: string): Promise<string> {
   const data = enc.encode(pin + "verification_salt");
   const hash = await window.crypto.subtle.digest("SHA-256", data);
   return btoa(String.fromCharCode(...new Uint8Array(hash)));
+}
+
+export async function encryptWithPassword(text: string, password: string): Promise<string> {
+  const enc = new TextEncoder();
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    enc.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
+  );
+
+  const key = await window.crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: salt,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt"]
+  );
+
+  const encrypted = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: iv },
+    key,
+    enc.encode(text)
+  );
+
+  const saltBase64 = btoa(String.fromCharCode(...salt));
+  const ivBase64 = btoa(String.fromCharCode(...iv));
+  const cipherBase64 = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+
+  return JSON.stringify({
+    encrypted: true,
+    salt: saltBase64,
+    iv: ivBase64,
+    ciphertext: cipherBase64
+  });
+}
+
+export async function decryptWithPassword(encryptedJson: string, password: string): Promise<string> {
+  try {
+    const { salt: saltBase64, iv: ivBase64, ciphertext: cipherBase64 } = JSON.parse(encryptedJson);
+    
+    if (!saltBase64 || !ivBase64 || !cipherBase64) {
+      throw new Error("Invalid encrypted format");
+    }
+
+    const enc = new TextEncoder();
+    const salt = Uint8Array.from(atob(saltBase64), c => c.charCodeAt(0));
+    const iv = Uint8Array.from(atob(ivBase64), c => c.charCodeAt(0));
+    const ciphertext = Uint8Array.from(atob(cipherBase64), c => c.charCodeAt(0));
+
+    const keyMaterial = await window.crypto.subtle.importKey(
+      "raw",
+      enc.encode(password),
+      { name: "PBKDF2" },
+      false,
+      ["deriveKey"]
+    );
+
+    const key = await window.crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt: salt,
+        iterations: 100000,
+        hash: "SHA-256",
+      },
+      keyMaterial,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["decrypt"]
+    );
+
+    const decrypted = await window.crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: iv },
+      key,
+      ciphertext
+    );
+
+    const dec = new TextDecoder();
+    return dec.decode(decrypted);
+  } catch (err) {
+    throw new Error("Decryption failed. Invalid password or corrupted file.");
+  }
 }

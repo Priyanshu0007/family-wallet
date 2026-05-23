@@ -1,34 +1,45 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PinDots from './PinDots';
 import PinNumpad from './PinNumpad';
 import { usePinStore } from '../../store/pinStore';
-import { Wallet } from 'lucide-react';
+import TijoriLogo from '../ui/TijoriLogo';
 
 export default function PinLock() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
-  const [timer, setTimer] = useState<string>('');
   const { verifyPin, attempts, lockoutUntil, resetApp } = usePinStore();
 
+  const [mounted, setMounted] = useState(false);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (lockoutUntil && lockoutUntil > Date.now()) {
-      interval = setInterval(() => {
-        const remaining = lockoutUntil - Date.now();
-        if (remaining <= 0) {
-          clearInterval(interval);
-          setTimer('');
-        } else {
-          const m = Math.floor(remaining / 60000);
-          const s = Math.floor((remaining % 60000) / 1000);
-          setTimer(`${m}:${s.toString().padStart(2, '0')}`);
-        }
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [lockoutUntil]);
+    const t = setTimeout(() => {
+      setMounted(true);
+      setCurrentTime(Date.now());
+    }, 0);
+
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => {
+      clearTimeout(t);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const isLockedOut = mounted && lockoutUntil !== null && lockoutUntil > currentTime;
+
+  const timer = useMemo(() => {
+    if (!lockoutUntil || !currentTime) return '';
+    const remaining = lockoutUntil - currentTime;
+    if (remaining <= 0) return '';
+    const m = Math.floor(remaining / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }, [lockoutUntil, currentTime]);
 
   const handleKeyPress = async (key: string) => {
     if (pin.length < 6) {
@@ -49,8 +60,6 @@ export default function PinLock() {
   const handleBackspace = () => setPin(prev => prev.slice(0, -1));
   const handleClear = () => setPin('');
 
-  const isLockedOut = lockoutUntil !== null && lockoutUntil > Date.now();
-
   return (
     <motion.div 
       className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center p-6"
@@ -59,10 +68,10 @@ export default function PinLock() {
       exit={{ opacity: 0 }}
     >
       <div className="flex flex-col items-center mb-12">
-        <div className="w-16 h-16 rounded-full bg-primary/20 text-primary flex items-center justify-center mb-4">
-          <Wallet size={32} />
+        <div className="mb-4">
+          <TijoriLogo size={64} />
         </div>
-        <h1 className="text-2xl font-bold font-sora">Tijori 🔐</h1>
+        <h1 className="text-2xl font-bold font-sora">Tijori</h1>
       </div>
 
       <div className="h-20 flex items-center justify-center mb-8 w-full">

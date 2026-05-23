@@ -42,9 +42,25 @@ export function getExpiryStatus(expiry: string): 'ok' | 'expiring' | 'expired' {
   }
 }
 
+let activeTimeout: any = null;
+let activeCopiedValue = '';
+
 export async function copyToClipboard(text: string): Promise<void> {
   await navigator.clipboard.writeText(text);
-  setTimeout(() => {
-    navigator.clipboard.writeText(''); // Clear clipboard after 30 seconds
+  activeCopiedValue = text;
+  
+  if (activeTimeout) {
+    clearTimeout(activeTimeout);
+  }
+  
+  activeTimeout = setTimeout(async () => {
+    try {
+      const currentText = await navigator.clipboard.readText();
+      if (currentText === activeCopiedValue) {
+        await navigator.clipboard.writeText('');
+      }
+    } catch (err) {
+      console.warn('[Clipboard] Failed to read clipboard for verification:', err);
+    }
   }, 30000);
 }

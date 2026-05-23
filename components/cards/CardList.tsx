@@ -26,7 +26,7 @@ export default function CardList() {
   }
 
   // Filter
-  let filtered = cards;
+  let filtered = [...cards];
   if (filter !== 'All') {
     if (filter === 'Credit' || filter === 'Debit') {
       filtered = filtered.filter(c => c.type === filter);
@@ -63,14 +63,18 @@ export default function CardList() {
     switch (sortBy) {
       case 'Oldest first': return a.addedAt - b.addedAt;
       case 'Expiry: soonest first': {
-        const [am, ay] = a.expiry.split('/');
-        const [bm, by] = b.expiry.split('/');
-        return (parseInt(ay) * 12 + parseInt(am)) - (parseInt(by) * 12 + parseInt(bm));
+        const [am, ay] = (a.expiry || '').split('/');
+        const [bm, by] = (b.expiry || '').split('/');
+        const valA = (parseInt(ay, 10) || 0) * 12 + (parseInt(am, 10) || 0);
+        const valB = (parseInt(by, 10) || 0) * 12 + (parseInt(bm, 10) || 0);
+        return valA - valB;
       }
       case 'Expiry: latest first': {
-        const [am, ay] = a.expiry.split('/');
-        const [bm, by] = b.expiry.split('/');
-        return (parseInt(by) * 12 + parseInt(bm)) - (parseInt(ay) * 12 + parseInt(am));
+        const [am, ay] = (a.expiry || '').split('/');
+        const [bm, by] = (b.expiry || '').split('/');
+        const valA = (parseInt(ay, 10) || 0) * 12 + (parseInt(am, 10) || 0);
+        const valB = (parseInt(by, 10) || 0) * 12 + (parseInt(bm, 10) || 0);
+        return valB - valA;
       }
       case 'Bank: A to Z': return a.bank.localeCompare(b.bank);
       case 'Cardholder: A to Z': return a.holder.localeCompare(b.holder);

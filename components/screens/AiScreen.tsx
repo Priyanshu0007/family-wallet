@@ -67,6 +67,7 @@ export default function AiScreen({ onBack }: AiScreenProps) {
       type: c.type,
       network: c.network,
       holder: c.holder,
+      benefits: c.benefits || [],
     }));
   }, [cards]);
 

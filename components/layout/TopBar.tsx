@@ -1,10 +1,11 @@
 "use client";
 import { useState } from 'react';
-import { Lock, Search, SlidersHorizontal, Wallet, X } from 'lucide-react';
+import { Lock, Search, SlidersHorizontal, X } from 'lucide-react';
 import { usePinStore } from '../../store/pinStore';
 import { useUiStore } from '../../store/uiStore';
 import { useCardStore } from '../../store/cardStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import TijoriLogo from '../ui/TijoriLogo';
 
 export default function TopBar() {
   const lock = usePinStore((s) => s.lock);
@@ -25,10 +26,8 @@ export default function TopBar() {
             className="flex items-center justify-between w-full h-full"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
-                <Wallet size={18} />
-              </div>
-              <h1 className="font-sora font-bold text-lg hidden sm:block">Tijori 🔐</h1>
+              <TijoriLogo size={32} />
+              <h1 className="font-sora font-bold text-lg hidden sm:block">Tijori</h1>
             </div>
             
             <div className="flex items-center gap-2">

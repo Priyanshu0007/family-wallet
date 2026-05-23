@@ -3,12 +3,13 @@ import { usePinStore } from '../../store/pinStore';
 import { useUiStore } from '../../store/uiStore';
 import { useCardStore } from '../../store/cardStore';
 import { useFamilyStore } from '../../store/familyStore';
-import { Shield, Smartphone, Trash2, Download, Upload, Info, Users, Plus, ChevronDown, ChevronUp, User } from 'lucide-react';
+import { Shield, Smartphone, Trash2, Download, Upload, Info, Users, Plus, ChevronDown, ChevronUp, User, Eye, EyeOff, AlertTriangle, Lock, Unlock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ConfirmModal from '../ui/ConfirmModal';
 import ChangePinModal from '../pin/ChangePinModal';
 import { getDecryptedCards } from '../../store/db';
-import { importKeyFromBase64, exportKeyToBase64 } from '../../store/crypto';
+import { encryptWithPassword, decryptWithPassword } from '../../store/crypto';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SettingsScreen() {
   const { resetApp, timeoutDuration, setTimeoutDuration } = usePinStore();
@@ -23,6 +24,19 @@ export default function SettingsScreen() {
   const [memberRelation, setMemberRelation] = useState('');
   const [memberColor, setMemberColor] = useState('#3b82f6');
 
+  // Encryption export/import state
+  const [isExportModalOpen, setExportModalOpen] = useState(false);
+  const [exportPassword, setExportPassword] = useState('');
+  const [exportConfirmPassword, setExportConfirmPassword] = useState('');
+  const [showExportPassword, setShowExportPassword] = useState(false);
+  const [exportMode, setExportMode] = useState<'encrypted' | 'plaintext'>('encrypted');
+
+  const [isImportModalOpen, setImportModalOpen] = useState(false);
+  const [importPassword, setImportPassword] = useState('');
+  const [showImportPassword, setShowImportPassword] = useState(false);
+  const [pendingImportContent, setPendingImportContent] = useState('');
+  const [importError, setImportError] = useState('');
+
   useEffect(() => {
     loadMembers();
   }, [loadMembers]);
@@ -31,52 +45,109 @@ export default function SettingsScreen() {
     setTimeoutDuration(Number(e.target.value));
   };
 
-  const handleExport = async () => {
+  const executeExportEncrypted = async () => {
+    if (!exportPassword) {
+      addToast('Password is required', 'error');
+      return;
+    }
+    if (exportPassword !== exportConfirmPassword) {
+      addToast('Passwords do not match', 'error');
+      return;
+    }
     try {
-      const cards = await getDecryptedCards();
-      const blob = new Blob([JSON.stringify(cards, null, 2)], { type: 'application/json' });
+      const cardsData = await getDecryptedCards();
+      const encryptedString = await encryptWithPassword(JSON.stringify(cardsData), exportPassword);
+      
+      const blob = new Blob([encryptedString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const downloadAnchorNode = document.createElement('a');
       downloadAnchorNode.setAttribute("href", url);
-      downloadAnchorNode.setAttribute("download", "family_wallet_export.json");
+      downloadAnchorNode.setAttribute("download", "family_wallet_backup_encrypted.json");
       document.body.appendChild(downloadAnchorNode);
       downloadAnchorNode.click();
       downloadAnchorNode.remove();
       URL.revokeObjectURL(url);
-      addToast('Data exported successfully', 'success');
+      
+      addToast('Encrypted backup exported successfully', 'success');
+      setExportModalOpen(false);
+      setExportPassword('');
+      setExportConfirmPassword('');
     } catch (err) {
+      console.error(err);
+      addToast('Failed to export encrypted data', 'error');
+    }
+  };
+
+  const executeExportPlaintext = async () => {
+    try {
+      const cardsData = await getDecryptedCards();
+      const blob = new Blob([JSON.stringify(cardsData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", url);
+      downloadAnchorNode.setAttribute("download", "family_wallet_backup_plaintext.json");
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+      URL.revokeObjectURL(url);
+      
+      addToast('Plaintext backup exported successfully', 'success');
+      setExportModalOpen(false);
+    } catch (err) {
+      console.error(err);
       addToast('Failed to export data', 'error');
     }
   };
 
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const executeImportCards = async (cardsList: any[]) => {
+    try {
+      let imported = 0;
+      for (const item of cardsList) {
+        // Re-encrypt by adding through store
+        await addCard({
+          bank: item.bank,
+          variant: item.variant,
+          type: item.type,
+          number: item.number,
+          expiry: item.expiry,
+          cvv: item.cvv,
+          holder: item.holder,
+          network: item.network || 'Unknown',
+          color: item.color || item.bank.toLowerCase(),
+          notes: item.notes,
+          benefits: item.benefits || []
+        });
+        imported++;
+      }
+      addToast(`Imported ${imported} cards successfully`, 'success');
+      await loadCards();
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to import cards into database', 'error');
+    }
+  };
+
+  const handleImportFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const json = JSON.parse(event.target?.result as string);
-        if (Array.isArray(json)) {
-          let imported = 0;
-          for (const item of json) {
-            // Re-encrypt by adding through store
-            await addCard({
-              bank: item.bank,
-              variant: item.variant,
-              type: item.type,
-              number: item.number,
-              expiry: item.expiry,
-              cvv: item.cvv,
-              holder: item.holder,
-              network: item.network || 'Unknown',
-              color: item.color || item.bank.toLowerCase(),
-              notes: item.notes
-            });
-            imported++;
-          }
-          addToast(`Imported ${imported} cards successfully`, 'success');
-          await loadCards();
+        const text = event.target?.result as string;
+        const json = JSON.parse(text);
+        
+        // Check if this is an encrypted JSON
+        if (json && typeof json === 'object' && json.encrypted === true) {
+          setPendingImportContent(text);
+          setImportPassword('');
+          setImportError('');
+          setImportModalOpen(true);
+        } else if (Array.isArray(json)) {
+          // Regular plaintext array import
+          await executeImportCards(json);
+        } else {
+          addToast('Invalid backup file format', 'error');
         }
       } catch (err) {
         addToast('Invalid JSON file', 'error');
@@ -84,6 +155,29 @@ export default function SettingsScreen() {
     };
     reader.readAsText(file);
     e.target.value = ''; // reset
+  };
+
+  const handleDecryptAndImport = async () => {
+    if (!importPassword) {
+      setImportError('Password is required');
+      return;
+    }
+    try {
+      setImportError('');
+      const decryptedText = await decryptWithPassword(pendingImportContent, importPassword);
+      const cardsList = JSON.parse(decryptedText);
+      if (Array.isArray(cardsList)) {
+        await executeImportCards(cardsList);
+        setImportModalOpen(false);
+        setPendingImportContent('');
+        setImportPassword('');
+      } else {
+        setImportError('Invalid card list format in decrypted backup');
+      }
+    } catch (err) {
+      console.error(err);
+      setImportError('Incorrect password or corrupted file');
+    }
   };
 
   const handleAddMember = async (e: React.FormEvent) => {
@@ -302,7 +396,15 @@ export default function SettingsScreen() {
           <div className="bg-surface-elevated rounded-2xl border border-border overflow-hidden">
             <button 
               type="button"
-              onClick={handleExport} 
+              onClick={() => {
+                if (cards.length === 0) {
+                  addToast('No cards to export', 'info');
+                } else {
+                  setExportPassword('');
+                  setExportConfirmPassword('');
+                  setExportModalOpen(true);
+                }
+              }} 
               className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors border-b border-border text-left"
             >
               <div className="flex items-center gap-3">
@@ -311,7 +413,7 @@ export default function SettingsScreen() {
                 </div>
                 <div>
                   <p className="font-medium">Export Data</p>
-                  <p className="text-sm text-text-secondary">Download as JSON (decrypted)</p>
+                  <p className="text-sm text-text-secondary">Export cards as encrypted or plaintext JSON</p>
                 </div>
               </div>
             </button>
@@ -323,10 +425,10 @@ export default function SettingsScreen() {
                 </div>
                 <div>
                   <p className="font-medium">Import Data</p>
-                  <p className="text-sm text-text-secondary">Upload a JSON backup</p>
+                  <p className="text-sm text-text-secondary">Restore cards from a JSON backup</p>
                 </div>
               </div>
-              <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+              <input type="file" accept=".json" onChange={handleImportFileSelect} className="hidden" />
             </label>
 
             <button 
@@ -382,6 +484,236 @@ export default function SettingsScreen() {
         isOpen={isChangePinModalOpen} 
         onClose={() => setChangePinModalOpen(false)} 
       />
+
+      {/* Export Modal */}
+      <AnimatePresence>
+        {isExportModalOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setExportModalOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative bg-surface rounded-[24px] p-6 max-w-md w-full shadow-2xl border border-border overflow-hidden z-10"
+            >
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-xl font-sora font-semibold flex items-center gap-2">
+                  <Download className="text-primary" size={20} />
+                  <span>Backup Wallet Data</span>
+                </h3>
+              </div>
+
+              {/* Tabs for Mode selection */}
+              <div className="flex bg-surface-elevated p-1 rounded-xl mb-6">
+                <button
+                  type="button"
+                  onClick={() => setExportMode('encrypted')}
+                  className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-all ${
+                    exportMode === 'encrypted'
+                      ? 'bg-surface text-primary shadow-sm border border-border/40'
+                      : 'text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  Encrypted (Recommended)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExportMode('plaintext')}
+                  className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-all ${
+                    exportMode === 'plaintext'
+                      ? 'bg-surface text-danger shadow-sm border border-border/40'
+                      : 'text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  Plaintext (Unsafe)
+                </button>
+              </div>
+
+              {exportMode === 'encrypted' ? (
+                <div className="space-y-4">
+                  <p className="text-xs text-text-secondary leading-relaxed">
+                    Protect your backup file using an encryption passphrase. You will need this exact passphrase to import the data back.
+                  </p>
+                  <div>
+                    <label className="block text-xs text-text-muted mb-1 font-semibold">Passphrase</label>
+                    <div className="relative">
+                      <input
+                        type={showExportPassword ? "text" : "password"}
+                        value={exportPassword}
+                        onChange={(e) => setExportPassword(e.target.value)}
+                        placeholder="Enter encryption passphrase"
+                        className="w-full bg-surface border border-border rounded-xl pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors text-text-primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowExportPassword(!showExportPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+                      >
+                        {showExportPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-text-muted mb-1 font-semibold">Confirm Passphrase</label>
+                    <input
+                      type={showExportPassword ? "text" : "password"}
+                      value={exportConfirmPassword}
+                      onChange={(e) => setExportConfirmPassword(e.target.value)}
+                      placeholder="Confirm passphrase"
+                      className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors text-text-primary"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 justify-end pt-4 border-t border-border mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setExportModalOpen(false)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:bg-surface-elevated transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={executeExportEncrypted}
+                      disabled={!exportPassword || exportPassword.length < 4 || exportPassword !== exportConfirmPassword}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-primary hover:bg-primary/95 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary/10"
+                    >
+                      <Lock size={14} />
+                      <span>Export Encrypted</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-danger/8 border border-danger/20 rounded-xl p-4 flex gap-3 text-danger">
+                    <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-semibold mb-1">Security Warning</p>
+                      <p className="text-[11px] leading-relaxed opacity-90">
+                        Exporting in plaintext will write all credit/debit card numbers, expiry dates, CVVs, and notes to the backup file in an unencrypted format. Anyone who gains access to this file can view all your sensitive data instantly.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 justify-end pt-4 border-t border-border mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setExportModalOpen(false)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:bg-surface-elevated transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={executeExportPlaintext}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-danger hover:bg-danger/90 transition-all shadow-lg shadow-danger/10"
+                    >
+                      <Unlock size={14} />
+                      <span>Export Plaintext</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Import Modal */}
+      <AnimatePresence>
+        {isImportModalOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setImportModalOpen(false);
+                setPendingImportContent('');
+              }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative bg-surface rounded-[24px] p-6 max-w-md w-full shadow-2xl border border-border z-10"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-sora font-semibold flex items-center gap-2">
+                  <Lock className="text-violet-400" size={20} />
+                  <span>Decrypt Backup</span>
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  This backup file is encrypted. Please enter the passphrase used during export to decrypt and restore your cards.
+                </p>
+
+                <div>
+                  <label className="block text-xs text-text-muted mb-1 font-semibold">Passphrase</label>
+                  <div className="relative">
+                    <input
+                      type={showImportPassword ? "text" : "password"}
+                      value={importPassword}
+                      onChange={(e) => {
+                        setImportPassword(e.target.value);
+                        if (importError) setImportError('');
+                      }}
+                      placeholder="Enter decryption passphrase"
+                      className="w-full bg-surface border border-border rounded-xl pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors text-text-primary"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowImportPassword(!showImportPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+                    >
+                      {showImportPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {importError && (
+                    <p className="text-danger text-xs mt-1.5 font-medium flex items-center gap-1">
+                      <AlertTriangle size={12} />
+                      <span>{importError}</span>
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3 justify-end pt-4 border-t border-border mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImportModalOpen(false);
+                      setPendingImportContent('');
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:bg-surface-elevated transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDecryptAndImport}
+                    disabled={!importPassword}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-primary hover:bg-primary/95 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary/10"
+                  >
+                    <Unlock size={14} />
+                    <span>Decrypt & Import</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

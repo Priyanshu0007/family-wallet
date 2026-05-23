@@ -9,7 +9,9 @@ interface CardVisualProps {
 }
 
 export default function CardVisual({ card, showFullNumber = false }: CardVisualProps) {
-  const bgClass = getBankColorClass(card.bank);
+  const bgClass = card.color && card.color.includes('from-') 
+    ? card.color 
+    : getBankColorClass(card.bank);
   const status = getExpiryStatus(card.expiry);
   const displayNum = showFullNumber ? card.number : maskCardNumber(card.number);
 
