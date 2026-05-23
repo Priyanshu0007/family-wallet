@@ -5,8 +5,8 @@ import { useCardStore } from '../../store/cardStore';
 import BottomSheet from '../ui/BottomSheet';
 import ConfirmModal from '../ui/ConfirmModal';
 import CardVisual from './CardVisual';
-import { copyToClipboard, getExpiryStatus } from '../../lib/cardUtils';
-import { Copy, Edit2, Trash2, Eye, EyeOff, AlertTriangle, Clock, Trophy } from 'lucide-react';
+import { copyToClipboard, getExpiryStatus, getCardUtilization, getBillDueStatus } from '../../lib/cardUtils';
+import { Copy, Edit2, Trash2, Eye, EyeOff, AlertTriangle, Clock, Trophy, Calendar } from 'lucide-react';
 
 export default function CardDetail() {
   const { activeSheet, activeCardId, closeSheet, openSheet, addToast } = useUiStore();
@@ -22,6 +22,8 @@ export default function CardDetail() {
   if (!card) return null;
 
   const expiryStatus = getExpiryStatus(card.expiry);
+  const utilization = getCardUtilization(card.usedCredit, card.limit);
+  const billStatus = getBillDueStatus(card.dueDateDay);
 
   const handleCopyNum = async () => {
     await copyToClipboard(card.number.replace(/\s/g, ''));
@@ -60,8 +62,80 @@ export default function CardDetail() {
           <div className="mb-8">
             <CardVisual card={card} showFullNumber={showFullNum} />
           </div>
-
           <div className="space-y-4 mb-8">
+            {card.type === 'Credit' && card.limit !== undefined && card.limit > 0 && (
+              <div className="bg-surface-elevated/70 rounded-xl p-4 border border-border flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-text-muted font-medium uppercase tracking-wider">Credit Limit Details</span>
+                  <span className={`text-xs font-bold font-mono px-2 py-0.5 rounded-full ${
+                    utilization >= 75 ? 'bg-rose-500/10 text-rose-400 border border-rose-500/25' :
+                    utilization >= 50 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/25' :
+                    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'
+                  }`}>
+                    {utilization}% Utilized
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm mt-1">
+                  <div>
+                    <span className="block text-[10px] text-text-muted uppercase tracking-wider font-semibold">Used Credit</span>
+                    <span className="font-mono text-base font-bold text-text-primary">₹{(card.usedCredit || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] text-text-muted uppercase tracking-wider font-semibold">Total Limit</span>
+                    <span className="font-mono text-base font-bold text-text-secondary">₹{card.limit.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                <div className="h-1.5 bg-surface rounded-full overflow-hidden mt-1">
+                  <div 
+                    className={`h-full bg-gradient-to-r rounded-full transition-all duration-500 ${
+                      utilization >= 75 ? 'from-rose-500 to-red-500 shadow-[0_0_8px_rgba(244,63,94,0.3)]' :
+                      utilization >= 50 ? 'from-amber-400 to-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]' :
+                      'from-emerald-400 to-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                    }`}
+                    style={{ width: `${utilization}%` }}
+                  />
+                </div>
+
+                <div className="flex justify-between items-center text-xs mt-1 pt-2 border-t border-border/40">
+                  <span className="text-text-muted">Available Credit</span>
+                  <span className="font-mono font-bold text-emerald-400">₹{(card.limit - (card.usedCredit || 0)).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            )}
+
+            {card.type === 'Credit' && billStatus && (
+              <div className="bg-surface-elevated/70 rounded-xl p-4 border border-border flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-text-muted font-medium uppercase tracking-wider flex items-center gap-1.5">
+                    <Calendar size={13.5} className="text-text-muted/70" />
+                    <span>Billing Due Date</span>
+                  </span>
+                  
+                  {billStatus.dueToday ? (
+                    <span className="text-rose-400 font-bold bg-rose-500/10 border border-rose-500/25 px-2.5 py-0.5 rounded-full text-xs flex items-center gap-1 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                      <span>Due TODAY</span>
+                    </span>
+                  ) : billStatus.dueSoon ? (
+                    <span className="text-amber-400 font-bold bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded-full text-xs flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      <span>Due in {billStatus.daysRemaining} days</span>
+                    </span>
+                  ) : (
+                    <span className="text-text-secondary font-semibold bg-surface/80 border border-border/40 px-2.5 py-0.5 rounded-full text-xs font-mono">
+                      Due in {billStatus.daysRemaining} days
+                    </span>
+                  )}
+                </div>
+                
+                <p className="text-xs font-semibold text-text-secondary">
+                  Your monthly bill is due on the <span className="text-text-primary font-bold font-mono">{billStatus.dueDay}th</span> of every month.
+                </p>
+              </div>
+            )}
+
             <div className="bg-surface-elevated rounded-xl p-4 flex justify-between items-center border border-border">
               <div>
                 <p className="text-xs text-text-muted mb-1 font-medium uppercase tracking-wider">Card Number</p>

@@ -15,10 +15,8 @@ export default function CardForm() {
   const { members } = useFamilyStore();
   
   const isEdit = activeSheet === 'editCard';
-  const isOpen = activeSheet === 'addCard' || isEdit;
-
-  const [formData, setFormData] = useState<Partial<Card>>({
-    bank: '', variant: '', type: 'Credit', number: '', expiry: '', cvv: '', holder: '', notes: '', color: 'bank-default', benefits: [], rewardPoints: 0, pointValue: 0.25
+  const isOpen = activeSheet === 'addCard' || isEdit;  const [formData, setFormData] = useState<Partial<Card>>({
+    bank: '', variant: '', type: 'Credit', number: '', expiry: '', cvv: '', holder: '', notes: '', color: 'bank-default', benefits: [], rewardPoints: 0, pointValue: 0.25, limit: undefined, usedCredit: undefined, dueDateDay: undefined
   });
   
   const [network, setNetwork] = useState('Unknown');
@@ -52,7 +50,10 @@ export default function CardForm() {
             color: 'bank-default',
             benefits: [],
             rewardPoints: 0,
-            pointValue: 0.25
+            pointValue: 0.25,
+            limit: undefined,
+            usedCredit: undefined,
+            dueDateDay: undefined
           });
           setNetwork('Unknown');
         }
@@ -200,12 +201,16 @@ export default function CardForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const isCredit = formData.type === 'Credit';
       const trimmedData = {
         ...formData,
         bank: formData.bank?.trim() || '',
         variant: formData.variant?.trim() || '',
         holder: formData.holder?.trim() || '',
         notes: formData.notes?.trim() || '',
+        limit: isCredit && formData.limit !== undefined && (formData.limit as any) !== '' ? parseFloat(formData.limit as any) : undefined,
+        usedCredit: isCredit && formData.usedCredit !== undefined && (formData.usedCredit as any) !== '' ? parseFloat(formData.usedCredit as any) : undefined,
+        dueDateDay: isCredit && formData.dueDateDay !== undefined && (formData.dueDateDay as any) !== '' ? parseInt(formData.dueDateDay as any, 10) : undefined,
       };
 
       const finalColor = trimmedData.color && trimmedData.color.includes('from-')
@@ -375,7 +380,55 @@ export default function CardForm() {
           </datalist>
         </div>
 
-        {/* Reward Points */}
+        {/* Credit Limits and Billing Section */}
+        {formData.type === 'Credit' && (
+          <div className="bg-surface-elevated/30 border border-border/60 rounded-2xl p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-350">
+            <h4 className="text-xs font-bold text-primary uppercase tracking-wider font-sora">Credit Limit & Billing</h4>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10px] text-text-secondary uppercase tracking-wider font-semibold mb-1">Credit Limit (₹)</label>
+                <input 
+                  type="number"
+                  name="limit"
+                  min="0"
+                  value={formData.limit ?? ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, limit: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                  className="w-full bg-surface-elevated border border-border rounded-xl px-4 py-3 text-text-primary font-mono focus:outline-none focus:border-primary transition-colors"
+                  placeholder="e.g. 500000"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-text-secondary uppercase tracking-wider font-semibold mb-1">Used Credit (₹)</label>
+                <input 
+                  type="number"
+                  name="usedCredit"
+                  min="0"
+                  value={formData.usedCredit ?? ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, usedCredit: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                  className="w-full bg-surface-elevated border border-border rounded-xl px-4 py-3 text-text-primary font-mono focus:outline-none focus:border-primary transition-colors"
+                  placeholder="e.g. 150000"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] text-text-secondary uppercase tracking-wider font-semibold mb-1">Bill Due Day of Month</label>
+              <select
+                name="dueDateDay"
+                value={formData.dueDateDay ?? ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, dueDateDay: e.target.value ? parseInt(e.target.value, 10) : undefined }))}
+                className="w-full bg-surface-elevated border border-border rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
+              >
+                <option value="">Not Set (No Alerts)</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                  <option key={day} value={day}>{day}th of the month</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1">Reward Points</label>
           <div className="grid grid-cols-2 gap-3">

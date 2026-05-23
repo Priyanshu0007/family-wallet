@@ -64,3 +64,51 @@ export async function copyToClipboard(text: string): Promise<void> {
     }
   }, 30000);
 }
+
+export interface BillStatus {
+  dueSoon: boolean;
+  dueToday: boolean;
+  daysRemaining: number;
+  dueDay: number;
+}
+
+export function getBillDueStatus(dueDay?: number): BillStatus | null {
+  if (!dueDay || dueDay < 1 || dueDay > 31) return null;
+  
+  const today = new Date();
+  const currentDay = today.getDate();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  
+  // Clamping dueDay to last day of target month (e.g. 31st in a 30-day month, or 31st in February)
+  const getClampedDue = (year: number, monthIdx: number, targetDay: number): Date => {
+    const lastDay = new Date(year, monthIdx + 1, 0).getDate();
+    return new Date(year, monthIdx, Math.min(targetDay, lastDay));
+  };
+  
+  let due = getClampedDue(currentYear, currentMonth, dueDay);
+  
+  // If the due date has already passed in the current month, look at next month
+  if (currentDay > due.getDate()) {
+    due = getClampedDue(currentYear, currentMonth + 1, dueDay);
+  }
+  
+  // Clear times to make date-only comparison
+  const d1 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const d2 = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  
+  const diffTime = d2.getTime() - d1.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  
+  return {
+    dueSoon: diffDays <= 5 && diffDays >= 0,
+    dueToday: diffDays === 0,
+    daysRemaining: diffDays,
+    dueDay
+  };
+}
+
+export function getCardUtilization(usedCredit?: number, limit?: number): number {
+  if (!limit || limit <= 0) return 0;
+  return Math.min(100, Math.max(0, Math.round(((usedCredit || 0) / limit) * 100)));
+}

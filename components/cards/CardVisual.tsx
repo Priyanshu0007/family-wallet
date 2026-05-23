@@ -1,6 +1,6 @@
 "use client";
 import { Card } from '../../store/db';
-import { maskCardNumber, getExpiryStatus } from '../../lib/cardUtils';
+import { maskCardNumber, getExpiryStatus, getCardUtilization } from '../../lib/cardUtils';
 import { getBankColorClass } from '../../lib/constants';
 
 interface CardVisualProps {
@@ -14,6 +14,7 @@ export default function CardVisual({ card, showFullNumber = false }: CardVisualP
     : getBankColorClass(card.bank);
   const status = getExpiryStatus(card.expiry);
   const displayNum = showFullNumber ? card.number : maskCardNumber(card.number);
+  const utilization = getCardUtilization(card.usedCredit, card.limit);
 
   const nearExpiryBorder = status === 'expiring' 
     ? 'shadow-[0_0_20px_rgba(245,158,11,0.25)] border-amber-500/40' 
@@ -132,6 +133,22 @@ export default function CardVisual({ card, showFullNumber = false }: CardVisualP
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
             <span>CARD EXPIRED</span>
           </div>
+        </div>
+      )}
+
+      {/* Credit Utilization Bottom Gauge */}
+      {card.type === 'Credit' && card.limit !== undefined && card.limit > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/40 z-20">
+          <div 
+            className={`h-full bg-gradient-to-r transition-all duration-500 ease-out ${
+              utilization >= 75
+                ? 'from-rose-500 to-red-500 shadow-[0_0_6px_#f43f5e]'
+                : utilization >= 50
+                ? 'from-amber-400 to-amber-500 shadow-[0_0_6px_#f59e0b]'
+                : 'from-emerald-400 to-emerald-500 shadow-[0_0_6px_#10b981]'
+            }`}
+            style={{ width: `${utilization}%` }}
+          />
         </div>
       )}
     </div>
