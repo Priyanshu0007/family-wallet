@@ -3,21 +3,31 @@ import { usePinStore } from '../../store/pinStore';
 import { useUiStore } from '../../store/uiStore';
 import { useCardStore } from '../../store/cardStore';
 import { useFamilyStore } from '../../store/familyStore';
-import { Shield, Smartphone, Trash2, Download, Upload, Info, Users, Plus, ChevronDown, ChevronUp, User, Eye, EyeOff, AlertTriangle, Lock, Unlock } from 'lucide-react';
+import { Shield, Smartphone, Trash2, Download, Upload, Info, Users, Plus, ChevronDown, ChevronUp, User, Eye, EyeOff, AlertTriangle, Lock, Unlock, Fingerprint } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ConfirmModal from '../ui/ConfirmModal';
 import ChangePinModal from '../pin/ChangePinModal';
+import VerifyPinModal from '../pin/VerifyPinModal';
 import { getDecryptedCards } from '../../store/db';
 import { encryptWithPassword, decryptWithPassword } from '../../store/crypto';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SettingsScreen() {
-  const { resetApp, timeoutDuration, setTimeoutDuration } = usePinStore();
+  const { 
+    resetApp, 
+    timeoutDuration, 
+    setTimeoutDuration, 
+    isBiometricsSupported, 
+    isBiometricsEnabled, 
+    enableBiometrics, 
+    disableBiometrics 
+  } = usePinStore();
   const { loadCards, addCard, cards } = useCardStore();
   const { members, loadMembers, addMember, deleteMember } = useFamilyStore();
   const { addToast } = useUiStore();
   const [isResetModalOpen, setResetModalOpen] = useState(false);
   const [isChangePinModalOpen, setChangePinModalOpen] = useState(false);
+  const [isVerifyPinOpen, setVerifyPinOpen] = useState(false);
   const [isFamilyOpen, setFamilyOpen] = useState(false);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [memberName, setMemberName] = useState('');
@@ -43,6 +53,29 @@ export default function SettingsScreen() {
 
   const handleTimeoutChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setTimeoutDuration(Number(e.target.value));
+  };
+
+  const handleBiometricToggle = async () => {
+    if (isBiometricsEnabled) {
+      await disableBiometrics();
+      addToast('Biometric unlock disabled', 'info');
+    } else {
+      setVerifyPinOpen(true);
+    }
+  };
+
+  const handleVerifySuccess = async (pin: string) => {
+    try {
+      const success = await enableBiometrics(pin);
+      if (success) {
+        addToast('Biometric unlock enabled', 'success');
+      } else {
+        addToast('Failed to enable biometric unlock', 'error');
+      }
+    } catch (err: any) {
+      console.error(err);
+      addToast(err.message || 'Failed to register biometrics', 'error');
+    }
   };
 
   const executeExportEncrypted = async () => {
@@ -228,6 +261,33 @@ export default function SettingsScreen() {
                 </div>
               </div>
             </button>
+
+            {isBiometricsSupported && (
+              <div className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors border-b border-border text-left">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                    <Fingerprint size={20} />
+                  </div>
+                  <div>
+                    <p className="font-medium">Biometric Unlock</p>
+                    <p className="text-sm text-text-secondary">Unlock using Face ID or fingerprint</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBiometricToggle}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
+                    isBiometricsEnabled ? 'bg-primary' : 'bg-surface border border-border'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      isBiometricsEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            )}
             <div className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors text-left relative">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
@@ -483,6 +543,12 @@ export default function SettingsScreen() {
       <ChangePinModal 
         isOpen={isChangePinModalOpen} 
         onClose={() => setChangePinModalOpen(false)} 
+      />
+
+      <VerifyPinModal
+        isOpen={isVerifyPinOpen}
+        onClose={() => setVerifyPinOpen(false)}
+        onSuccess={handleVerifySuccess}
       />
 
       {/* Export Modal */}

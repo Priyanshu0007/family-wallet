@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 import { deriveKeyFromPin, hashPinForVerification, exportKeyToBase64, importKeyFromBase64, encryptText, decryptText } from './crypto';
+import { 
+  checkBiometricsSupport, 
+  registerBiometrics, 
+  authenticateBiometrics, 
+  encryptWithPrfKey, 
+  decryptWithPrfKey 
+} from '../lib/biometrics';
 
 interface PinState {
   isLocked: boolean;
@@ -8,6 +15,8 @@ interface PinState {
   attempts: number;
   lockoutUntil: number | null;
   timeoutDuration: number;
+  isBiometricsSupported: boolean;
+  isBiometricsEnabled: boolean;
   
   initialize: () => Promise<void>;
   setupPin: (pin: string) => Promise<void>;
@@ -15,6 +24,9 @@ interface PinState {
   changePin: (oldPin: string, newPin: string) => Promise<boolean>;
   setTimeoutDuration: (minutes: number) => void;
   lock: () => void;
+  enableBiometrics: (pin: string) => Promise<boolean>;
+  disableBiometrics: () => Promise<void>;
+  unlockWithBiometrics: () => Promise<boolean>;
   resetApp: () => Promise<void>;
 }
 
@@ -25,6 +37,8 @@ export const usePinStore = create<PinState>((set, get) => ({
   attempts: 0,
   lockoutUntil: null,
   timeoutDuration: 2,
+  isBiometricsSupported: false,
+  isBiometricsEnabled: false,
 
   initialize: async () => {
     const pinHash = localStorage.getItem('pin_hash');
@@ -46,13 +60,20 @@ export const usePinStore = create<PinState>((set, get) => ({
       }
     }
 
+    const isSupported = await checkBiometricsSupport();
+    const credIdBase64 = localStorage.getItem('biometric_cred_id');
+    const encryptedPin = localStorage.getItem('biometric_encrypted_pin');
+    const isBiometricsEnabled = !!(isSupported && credIdBase64 && encryptedPin);
+
     set({
       isFirstLaunch: !pinHash,
       isLocked,
       cryptoKey,
       attempts,
       lockoutUntil: lockoutUntil > Date.now() ? lockoutUntil : null,
-      timeoutDuration
+      timeoutDuration,
+      isBiometricsSupported: isSupported,
+      isBiometricsEnabled
     });
   },
 
@@ -187,6 +208,63 @@ export const usePinStore = create<PinState>((set, get) => ({
     set({ isLocked: true, cryptoKey: null });
   },
 
+  enableBiometrics: async (pin: string) => {
+    try {
+      const storedHash = localStorage.getItem('pin_hash');
+      const hash = await hashPinForVerification(pin);
+      if (hash !== storedHash) {
+        return false;
+      }
+
+      const { credentialId, prfOutput } = await registerBiometrics();
+      let finalPrfOutput = prfOutput;
+
+      if (!finalPrfOutput) {
+        // Fallback: if creation ceremony didn't return PRF output, run get ceremony immediately
+        finalPrfOutput = await authenticateBiometrics(credentialId);
+      }
+
+      const encryptedPin = await encryptWithPrfKey(pin, finalPrfOutput);
+      const credentialIdBase64 = btoa(String.fromCharCode(...credentialId));
+
+      localStorage.setItem('biometric_cred_id', credentialIdBase64);
+      localStorage.setItem('biometric_encrypted_pin', encryptedPin);
+
+      set({ isBiometricsEnabled: true });
+      return true;
+    } catch (err) {
+      console.error("[Biometrics] Failed to enable:", err);
+      throw err;
+    }
+  },
+
+  disableBiometrics: async () => {
+    localStorage.removeItem('biometric_cred_id');
+    localStorage.removeItem('biometric_encrypted_pin');
+    set({ isBiometricsEnabled: false });
+  },
+
+  unlockWithBiometrics: async () => {
+    try {
+      const credIdBase64 = localStorage.getItem('biometric_cred_id');
+      const encryptedPin = localStorage.getItem('biometric_encrypted_pin');
+
+      if (!credIdBase64 || !encryptedPin) {
+        throw new Error("Biometrics not enabled.");
+      }
+
+      const credentialId = Uint8Array.from(atob(credIdBase64), c => c.charCodeAt(0));
+      const prfOutput = await authenticateBiometrics(credentialId);
+      const decryptedPin = await decryptWithPrfKey(encryptedPin, prfOutput);
+
+      const success = await get().verifyPin(decryptedPin);
+      return success;
+    } catch (err) {
+      console.error("[Biometrics] Unlock failed:", err);
+      throw err;
+    }
+  },
+
   resetApp: async () => {
     const { db } = await import('./db');
     try {
@@ -205,7 +283,8 @@ export const usePinStore = create<PinState>((set, get) => ({
       isFirstLaunch: true,
       cryptoKey: null,
       attempts: 0,
-      lockoutUntil: null
+      lockoutUntil: null,
+      isBiometricsEnabled: false
     });
   }
 }));

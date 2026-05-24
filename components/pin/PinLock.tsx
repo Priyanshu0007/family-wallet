@@ -9,7 +9,7 @@ import TijoriLogo from '../ui/TijoriLogo';
 export default function PinLock() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
-  const { verifyPin, attempts, lockoutUntil, resetApp } = usePinStore();
+  const { verifyPin, attempts, lockoutUntil, resetApp, isBiometricsEnabled, unlockWithBiometrics } = usePinStore();
 
   const [mounted, setMounted] = useState(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
@@ -31,6 +31,29 @@ export default function PinLock() {
   }, []);
 
   const isLockedOut = mounted && lockoutUntil !== null && lockoutUntil > currentTime;
+
+  const handleBiometricUnlock = async () => {
+    if (isLockedOut) return;
+    try {
+      setError(false);
+      const success = await unlockWithBiometrics();
+      if (!success) {
+        setError(true);
+        setTimeout(() => setPin(''), 500);
+      }
+    } catch (err) {
+      console.warn("[Biometrics] Cancelled or failed biometric unlock:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (mounted && isBiometricsEnabled && !isLockedOut) {
+      const t = setTimeout(() => {
+        handleBiometricUnlock();
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [mounted, isBiometricsEnabled, isLockedOut]);
 
   const timer = useMemo(() => {
     if (!lockoutUntil || !currentTime) return '';
@@ -96,6 +119,8 @@ export default function PinLock() {
           onBackspace={handleBackspace}
           onClear={handleClear}
           disabled={pin.length === 6}
+          showBiometric={isBiometricsEnabled}
+          onBiometricClick={handleBiometricUnlock}
         />
       )}
 
