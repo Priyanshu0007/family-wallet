@@ -8,9 +8,10 @@ interface BottomSheetProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  headerActions?: React.ReactNode;
 }
 
-export default function BottomSheet({ isOpen, onClose, title, children }: BottomSheetProps) {
+export default function BottomSheet({ isOpen, onClose, title, children, headerActions }: BottomSheetProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -40,12 +41,15 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
           >
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <h2 className="font-sora font-semibold text-lg">{title}</h2>
-              <button 
-                onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-elevated hover:bg-border transition-colors text-text-secondary hover:text-text-primary"
-              >
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                {headerActions}
+                <button 
+                  onClick={onClose}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-elevated hover:bg-border transition-colors text-text-secondary hover:text-text-primary"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
             <div className="p-4 overflow-y-auto no-scrollbar pb-safe-offset-4">
               {children}

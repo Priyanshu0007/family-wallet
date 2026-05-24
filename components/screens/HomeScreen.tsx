@@ -2,6 +2,7 @@
 import TopBar from '../layout/TopBar';
 import FilterChips from '../ui/FilterChips';
 import CardList from '../cards/CardList';
+import FavoritesShelf from '../cards/FavoritesShelf';
 import { useUiStore } from '../../store/uiStore';
 import { Plus, Calendar, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { useCardStore } from '../../store/cardStore';
@@ -127,6 +128,8 @@ export default function HomeScreen() {
           </div>
         </div>
       )}
+
+      <FavoritesShelf />
 
       <FilterChips />
       

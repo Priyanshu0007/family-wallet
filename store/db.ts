@@ -21,6 +21,7 @@ export interface Card {
   limit?: number;
   usedCredit?: number;
   dueDateDay?: number;
+  isPinned?: boolean;
 }
 
 export interface FamilyMember {

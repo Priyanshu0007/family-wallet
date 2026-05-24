@@ -15,6 +15,7 @@ interface CardState {
   addCard: (card: Omit<Card, 'id' | 'addedAt'>) => Promise<void>;
   updateCard: (card: Card) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
+  togglePinCard: (id: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   setFilter: (filter: string) => void;
   setSortBy: (sort: string) => void;
@@ -59,9 +60,9 @@ export const useCardStore = create<CardState>((set, get) => ({
       }
       
       set({ 
-        cards: [], 
-        isLoading: false,
-        loadError: 'Failed to decrypt card data. If you recently changed your PIN, the data may be corrupted.'
+         cards: [], 
+         isLoading: false,
+         loadError: 'Failed to decrypt card data. If you recently changed your PIN, the data may be corrupted.'
       });
     }
   },
@@ -89,6 +90,13 @@ export const useCardStore = create<CardState>((set, get) => ({
   deleteCard: async (id: string) => {
     await db.cards.delete(id);
     await get().loadCards();
+  },
+
+  togglePinCard: async (id: string) => {
+    const card = get().cards.find(c => c.id === id);
+    if (!card) return;
+    const updated = { ...card, isPinned: !card.isPinned };
+    await get().updateCard(updated);
   },
 
   setSearchQuery: (query) => set({ searchQuery: query }),

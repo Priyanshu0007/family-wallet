@@ -7,7 +7,7 @@ import { useFamilyStore } from '../../store/familyStore';
 import { BANKS, PREMIUM_THEMES } from '../../lib/constants';
 import { getCardNetwork, formatCardNumber } from '../../lib/cardUtils';
 import { Card } from '../../store/db';
-import { Camera, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Camera, Loader2, Plus, Trash2, Pin } from 'lucide-react';
 
 export default function CardForm() {
   const { activeSheet, activeCardId, closeSheet, addToast } = useUiStore();
@@ -15,8 +15,10 @@ export default function CardForm() {
   const { members } = useFamilyStore();
   
   const isEdit = activeSheet === 'editCard';
-  const isOpen = activeSheet === 'addCard' || isEdit;  const [formData, setFormData] = useState<Partial<Card>>({
-    bank: '', variant: '', type: 'Credit', number: '', expiry: '', cvv: '', holder: '', notes: '', color: 'bank-default', benefits: [], rewardPoints: 0, pointValue: 0.25, limit: undefined, usedCredit: undefined, dueDateDay: undefined
+  const isOpen = activeSheet === 'addCard' || isEdit;
+
+  const [formData, setFormData] = useState<Partial<Card>>({
+    bank: '', variant: '', type: 'Credit', number: '', expiry: '', cvv: '', holder: '', notes: '', color: 'bank-default', benefits: [], rewardPoints: 0, pointValue: 0.25, limit: undefined, usedCredit: undefined, dueDateDay: undefined, isPinned: false
   });
   
   const [network, setNetwork] = useState('Unknown');
@@ -53,7 +55,8 @@ export default function CardForm() {
             pointValue: 0.25,
             limit: undefined,
             usedCredit: undefined,
-            dueDateDay: undefined
+            dueDateDay: undefined,
+            isPinned: false
           });
           setNetwork('Unknown');
         }
@@ -517,6 +520,30 @@ export default function CardForm() {
             rows={2}
             placeholder="Any extra info..."
           />
+        </div>
+
+        {/* Pin to Favorites Toggle */}
+        <div className="flex items-center justify-between p-4 bg-surface-elevated/45 rounded-xl border border-border/80 mt-1 select-none">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary shrink-0">
+              <Pin size={16} className={formData.isPinned ? "fill-primary" : "rotate-45"} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-text-primary">Pin to Favorites</span>
+              <span className="text-[10px] text-text-muted">Display this card at the top of the home screen</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFormData(prev => ({ ...prev, isPinned: !prev.isPinned }))}
+            className={`w-11 h-6 rounded-full relative transition-colors duration-200 shrink-0 ${
+              formData.isPinned ? 'bg-primary' : 'bg-surface-elevated border border-border'
+            }`}
+          >
+            <div className={`w-4 h-4 rounded-full bg-white absolute top-1 left-1 transition-transform duration-200 ${
+              formData.isPinned ? 'translate-x-5' : 'translate-x-0'
+            }`} />
+          </button>
         </div>
 
         <button 

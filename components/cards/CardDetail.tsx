@@ -6,11 +6,11 @@ import BottomSheet from '../ui/BottomSheet';
 import ConfirmModal from '../ui/ConfirmModal';
 import CardVisual from './CardVisual';
 import { copyToClipboard, getExpiryStatus, getCardUtilization, getBillDueStatus } from '../../lib/cardUtils';
-import { Copy, Edit2, Trash2, Eye, EyeOff, AlertTriangle, Clock, Trophy, Calendar } from 'lucide-react';
+import { Copy, Edit2, Trash2, Eye, EyeOff, AlertTriangle, Clock, Trophy, Calendar, Pin } from 'lucide-react';
 
 export default function CardDetail() {
   const { activeSheet, activeCardId, closeSheet, openSheet, addToast } = useUiStore();
-  const { cards, deleteCard } = useCardStore();
+  const { cards, deleteCard, togglePinCard } = useCardStore();
   
   const [showFullNum, setShowFullNum] = useState(false);
   const [showCvv, setShowCvv] = useState(false);
@@ -41,9 +41,28 @@ export default function CardDetail() {
     addToast('Card deleted', 'success');
   };
 
+  const handleTogglePin = async () => {
+    await togglePinCard(card.id);
+    addToast(card.isPinned ? 'Card unpinned from favorites' : 'Card pinned to favorites', 'success');
+  };
+
+  const pinButton = (
+    <button
+      onClick={handleTogglePin}
+      className={`w-8 h-8 flex items-center justify-center rounded-full transition-all duration-300 ${
+        card.isPinned 
+          ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-450 border border-amber-500/20' 
+          : 'bg-surface-elevated hover:bg-border text-text-secondary hover:text-text-primary border border-border/80'
+      }`}
+      title={card.isPinned ? 'Unpin from favorites' : 'Pin to favorites'}
+    >
+      <Pin size={15} className={`transition-transform duration-300 ${card.isPinned ? 'fill-amber-400 rotate-45 text-amber-400' : ''}`} />
+    </button>
+  );
+
   return (
     <>
-      <BottomSheet isOpen={isOpen} onClose={closeSheet} title="Card Details">
+      <BottomSheet isOpen={isOpen} onClose={closeSheet} title="Card Details" headerActions={pinButton}>
         <div className="pb-8 animate-in fade-in duration-300">
           {expiryStatus === 'expired' && (
             <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl p-3.5 flex gap-3 items-center text-sm mb-6 font-sora">
